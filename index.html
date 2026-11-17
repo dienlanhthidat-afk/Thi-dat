@@ -301,7 +301,11 @@ function simScore(a,b){const na=a.filter(x=>/\d/.test(x)).sort().join(' '),nb=b.
   const A=new Set(a),B=new Set(b);let k=0;A.forEach(x=>{if(B.has(x))k++});
   for(const x of A)if(!B.has(x)&&KIND.has(x))return 0;for(const x of B)if(!A.has(x)&&KIND.has(x))return 0;
   return k/Math.max(1,A.size+B.size-k)}
-const KIND=new Set(['co','te','t','y','noi','loi','tho','cong','giam','chech','bit','nut','van','kep','mang','thang','ong','ren','rn','rt','xuong','len','ngang','nap','bo','dau','cu','kem','thau','vong','dai','tay','chan','khop','lien','tu'])
+const KIND=new Set(['co','te','t','y','noi','loi','tho','cong','giam','chech','bit','nut','van','kep','mang','thang','ong','ren','rn','rt','xuong','len','ngang','nap','bo','dau','cu','kem','thau','vong','dai','tay','chan','khop','lien','tu','tg','g','cung','khac','tan','v','u','l','h','i','vuong','tron'])
+const sameKind=(a,b)=>{const A=new Set(a),B=new Set(b);for(const x of A)if(!B.has(x)&&KIND.has(x))return false;for(const x of B)if(!A.has(x)&&KIND.has(x))return false;return true};
+const compact=n=>norm(n).replace(/(\d),(\d)/g,'$1.$2').replace(/[^a-z0-9.]/g,'');
+function dice(a,b){if(a===b)return 1;if(a.length<2||b.length<2)return 0;const m=new Map();for(let i=0;i<a.length-1;i++){const g=a.substr(i,2);m.set(g,(m.get(g)||0)+1)}
+  let k=0;for(let i=0;i<b.length-1;i++){const g=b.substr(i,2),c=m.get(g);if(c){k++;m.set(g,c-1)}}return 2*k/(a.length+b.length-2)}
 const simItems=name=>{const a=tokOf(name);return arr(S.items).map(it=>{let s=simScore(a,tokOf(it.name));
   arr(S.convs).filter(c=>c.itemId===it.id).forEach(c=>{s=Math.max(s,simScore(a,tokOf(c.name)))});return{it,s}}).filter(x=>x.s>=.45).sort((x,y)=>y.s-x.s).slice(0,4)};
 
@@ -523,32 +527,32 @@ A.cvPick=d=>{const L=$('#layer'),s=$('#cv_item',L);if(!s)return;s.value=d.id;con
 /* ================= DANH MỤC HÀNG HÓA (tạm, gom từ hóa đơn đầu vào) ================= */
 let dmMemo={v:-1};
 function catalog(){
-  if(dmMemo.v===ver)return dmMemo.g;
+  if(dmMemo.v===ver&&dmMemo.th===(st.dmTh||'0.9'))return dmMemo.g;
   const N={};goodInv('in').forEach(i=>invLines(i).forEach(x=>{const nm=String(x.name||'').trim();if(!nm||num(x.amount)===0&&num(x.price)===0&&/tang kem|khuyen mai/.test(norm(nm)))return;
     const k=norm(nm).replace(/\s+/g,' ')+'|'+norm(x.unit),r=N[k]=N[k]||{key:norm(x.name)+'|'+norm(x.unit),name:nm,unit:x.unit||'',n:0,qty:0,amt:0,last:'',lastPrice:0,minP:Infinity,maxP:0,ncc:new Set()};
     r.n++;r.qty+=num(x.qty);r.amt+=num(x.amount)||num(x.qty)*num(x.price);const p=num(x.price);if(p>0){r.minP=Math.min(r.minP,p);r.maxP=Math.max(r.maxP,p)}
     if((i.date||'')>=r.last){r.last=i.date;r.lastPrice=p}r.ncc.add(i.partyName||'')}));
-  // gom theo độ giống tên: cùng các con số, giống từ 60% chữ; so với tên đại diện của nhóm để không nối dây chuyền
-  const L=Object.values(N).sort((a,b)=>b.n-a.n),T=L.map(x=>tokOf(x.name)),G={},leaders={};
+  // gom theo độ giống tên: so từng cặp ký tự (bỏ dấu, khoảng trắng, ký hiệu); cùng các con số; không khác loại phụ kiện; so với tên đại diện để không nối dây chuyền
+  const th=+(st.dmTh||0.9),L=Object.values(N).sort((a,b)=>b.n-a.n),T=L.map(x=>tokOf(x.name)),C=L.map(x=>compact(x.name)),G={},leaders={};
   L.forEach((x,i)=>{const nk=T[i].filter(t=>/\d/.test(t)).sort().join(' '),ls=leaders[nk]=leaders[nk]||[];let best=-1,bs=0;
-    for(const j of ls){const sc=simScore(T[i],T[j]);if(sc>=.6&&sc>bs){bs=sc;best=j}}
-    if(best<0){ls.push(i);G[i]=[x]}else G[best].push(x)});
+    for(const j of ls){if(!sameKind(T[i],T[j]))continue;const sc=dice(C[i],C[j]);if(sc>=th&&sc>bs){bs=sc;best=j}}
+    x.sim=best<0?1:bs;if(best<0){ls.push(i);G[i]=[x]}else G[best].push(x)});
   const g=Object.values(G).map(items=>{items.sort((a,b)=>b.n-a.n);const c=items.map(x=>cvOf(x.name,x.unit)).find(Boolean),it=c&&c.itemId&&S.items[c.itemId];
     return{items,main:items[0],n:sum(items,x=>x.n),amt:sum(items,x=>x.amt),units:[...new Map(items.filter(x=>x.unit).map(x=>[norm(x.unit),x.unit])).values()],ncc:[...new Set(items.flatMap(x=>[...x.ncc]).filter(Boolean))],last:items.map(x=>x.last).sort().pop()||'',code:it?it.code:'',mapped:items.filter(x=>cvOf(x.name,x.unit)).length}})
    .sort((a,b)=>b.items.length-a.items.length||b.amt-a.amt);
-  dmMemo={v:ver,g};return g;
+  dmMemo={v:ver,th:st.dmTh||'0.9',g};return g;
 }
-VIEWS.danhmuc={title:'Danh mục hàng hóa',bar:()=>`<input type="search" placeholder="Tìm tên hàng, nhà cung cấp" data-bind="dmq" value="${esc(st.dmq||'')}"><label class="chk"><input type="checkbox" data-bind="dmMulti" ${st.dmMulti?'checked':''}> Chỉ nhóm có nhiều tên</label><button class="btn pri" data-act="dmXlsx">Xuất Excel</button>`,
+VIEWS.danhmuc={title:'Danh mục hàng hóa',bar:()=>`<select data-bind="dmTh" aria-label="Mức giống">${[['0.9','Gom tên giống từ 90% (chắc chắn)'],['0.85','Gom tên giống từ 85%'],['0.8','Gom tên giống từ 80% (cần xem lại)']].map(([v,t])=>`<option value="${v}"${(st.dmTh||'0.9')===v?' selected':''}>${t}</option>`).join('')}</select><input type="search" placeholder="Tìm tên hàng, nhà cung cấp" data-bind="dmq" value="${esc(st.dmq||'')}"><label class="chk"><input type="checkbox" data-bind="dmMulti" ${st.dmMulti?'checked':''}> Chỉ nhóm có nhiều tên</label><button class="btn pri" data-act="dmXlsx">Xuất Excel</button>`,
  body(){const q=norm(st.dmq||''),all=catalog();const l=all.filter(g=>(!st.dmMulti||g.items.length>1)&&(!q||norm(g.items.map(x=>x.name).join(' ')+' '+g.ncc.join(' ')).includes(q)));
   const multi=all.filter(g=>g.items.length>1);
-  return `<div class="note">${pill('Tạm thời','gold')}<span>Danh mục tạm, tập hợp mọi tên hàng trên <b>hóa đơn đầu vào</b>. Các tên giống nhau (cùng con số, giống từ 60% chữ trở lên, VD "Dây cáp CV 2.5" và "Cáp điện CV-2.5") được <b>gom chung một nhóm</b>. Khi chị chọn lọc xong, bấm <b>Tạo mã cho nhóm</b> để gán mã hàng MH…; nhóm nào gom sai thì bỏ chọn tên đó trong hộp tạo mã.</span></div>
+  return `<div class="note">${pill('Tạm thời','gold')}<span>Danh mục tạm, tập hợp mọi tên hàng trên <b>hóa đơn đầu vào</b>. Các tên giống nhau từ <b>${Math.round((st.dmTh||0.9)*100)}%</b> trở lên (so từng ký tự sau khi bỏ dấu, khoảng trắng; các con số phải khớp; không gom khác loại phụ kiện như co với tê) được <b>gom chung một nhóm</b>. Số % bên cạnh mỗi tên là độ giống với tên đại diện. Khi chị chọn lọc xong, bấm <b>Tạo mã cho nhóm</b> để gán mã hàng MH…; nhóm nào gom sai thì bỏ chọn tên đó trong hộp tạo mã.</span></div>
   <div class="tiles"><div class="card tile"><div class="l">Nhóm hàng</div><div class="v">${all.length}</div><div class="s">từ ${sum(all,g=>g.items.length)} tên khác nhau</div></div><div class="card tile"><div class="l">Nhóm có nhiều tên</div><div class="v">${multi.length}</div><div class="s">${sum(multi,g=>g.items.length)} tên được gom</div></div><div class="card tile"><div class="l">Đã có mã hàng</div><div class="v">${all.filter(g=>g.code).length}</div><div class="s">nhóm</div></div></div>`+
   table([['Tạo mã'],['Tên đại diện','w'],['Các tên trong nhóm','w2'],['ĐVT'],['Số dòng HĐ','r'],['Giá nhập','r'],['Tổng tiền nhập','r'],['Nhà cung cấp','w'],['Nhập gần nhất']],
    l.map(g=>({c:[g.code?`<b>${esc(g.code)}</b>`:canWrite()?`<button class="btn sm gold" data-act="mhMerge" data-id="${esc(g.items.filter(x=>!cvOf(x.name,x.unit)).map(x=>x.key).join('§'))}">Tạo mã cho nhóm</button>`:'<span class="mute">Chưa có mã</span>',
-    `<b>${esc(g.main.name)}</b>`,g.items.length>1?g.items.map(x=>`${esc(x.name)} <span class="mute">(${esc(x.unit||'—')}, ${x.n})</span>`).join('<br>'):'<span class="mute">—</span>',esc(g.units.join(', ')),g.n,
+    `<b>${esc(g.main.name)}</b>`,g.items.length>1?g.items.map(x=>`${esc(x.name)} <span class="mute">(${esc(x.unit||'—')}, ${x.n} dòng${x.sim<1?', giống '+Math.round(x.sim*100)+'%':''})</span>`).join('<br>'):'<span class="mute">—</span>',esc(g.units.join(', ')),g.n,
     (()=>{const ps=g.items.filter(x=>x.maxP>0);if(!ps.length)return '';const mn=Math.min(...ps.map(x=>x.minP)),mx=Math.max(...ps.map(x=>x.maxP));return mn===mx?vnd(mn):vnd(mn)+' – '+vnd(mx)})(),vnd(g.amt),esc(g.ncc.slice(0,2).join('; '))+(g.ncc.length>2?` <span class="mute">+${g.ncc.length-2}</span>`:''),dmy(g.last)]})),{empty:'Chưa có chi tiết hàng hóa trên hóa đơn đầu vào.'});
  }};
-A.dmXlsx=()=>{const g=catalog(),rows=[];g.forEach((x,k)=>x.items.forEach(it=>rows.push({'Nhóm':k+1,'Tên đại diện':x.main.name,'Tên trên hóa đơn':it.name,'ĐVT':it.unit,'Số dòng HĐ':it.n,'Tổng SL':+it.qty.toFixed(4),'Giá nhập thấp nhất':it.maxP?it.minP:'','Giá nhập cao nhất':it.maxP||'','Giá gần nhất':it.lastPrice,'Tổng tiền nhập':Math.round(it.amt),'Nhà cung cấp':[...it.ncc].join('; '),'Mã hàng':x.code})));
+A.dmXlsx=()=>{const g=catalog(),rows=[];g.forEach((x,k)=>x.items.forEach(it=>rows.push({'Nhóm':k+1,'Tên đại diện':x.main.name,'Tên trên hóa đơn':it.name,'ĐVT':it.unit,'Số dòng HĐ':it.n,'Tổng SL':+it.qty.toFixed(4),'Giá nhập thấp nhất':it.maxP?it.minP:'','Giá nhập cao nhất':it.maxP||'','Giá gần nhất':it.lastPrice,'Tổng tiền nhập':Math.round(it.amt),'Nhà cung cấp':[...it.ncc].join('; '),'Độ giống':Math.round((it.sim??1)*100)+'%','Mã hàng':x.code})));
   exportXlsx('danh-muc-hang-hoa-'+today()+'.xlsx',{'Danh mục (theo nhóm)':rows})};
 function unmapped(){const m={};goodInv().forEach(i=>invLines(i).forEach((x,k)=>{if(cvOf(x.name,x.unit))return;const key=norm(x.name)+'|'+norm(x.unit),r=m[key]=m[key]||{key,name:x.name,unit:x.unit||'',n:0,qty:0,id:i.id,ln:k,dirs:new Set()};r.n++;r.qty+=num(x.qty);r.dirs.add(i.dir)}));return Object.values(m).sort((a,b)=>b.n-a.n)}
 function mergeSuggest(un){ // gom các tên chưa gán có độ giống cao
