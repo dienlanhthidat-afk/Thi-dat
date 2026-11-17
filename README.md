@@ -6,7 +6,7 @@ Bản đang chạy là artifact "Quản Lý Bán Hàng Thi Đạt" trên claude.
 ## Phạm vi
 
 Chỉ quản lý dữ liệu **ngân hàng** và **hóa đơn vào/ra** lấy từ eHoadon, BKAV, cổng thuế GDT và thư mục OneDrive "THI DAT".
-Báo giá, Hợp đồng, Khách hàng - NCC, Nhân sự là các mô-đun trống chờ dữ liệu thật. Không có dữ liệu mẫu.
+Báo giá và Hợp đồng là các mô-đun trống chờ dữ liệu thật. Khách hàng, Nhà cung cấp lấy theo MST trên hóa đơn; Nhân sự lấy bảng công từ phần mềm Chấm Công Công Trình. Không có dữ liệu mẫu.
 
 | Menu | Nội dung |
 |---|---|
