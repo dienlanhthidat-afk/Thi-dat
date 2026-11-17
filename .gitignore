@@ -1,0 +1,8 @@
+# Không đưa dữ liệu thật của công ty vào repo
+pack*.json
+*.xlsx
+*.xls
+*.csv
+*.xml
+*.pdf
+data/

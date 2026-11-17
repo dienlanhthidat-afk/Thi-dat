@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quản Lý Bán Hàng Thi Đạt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f8;--panel:#fff;--ink:#14212b;--mute:#62717c;--line:#e2e7ec;--soft:#f7f9fb;
+  --navy:#0f2742;--navy2:#16365a;--gold:#e0b04f;--gold-ink:#2b1e00;--gold-soft:#fbf1dc;
+  --accent:#16365a;--accent-soft:#e6edf6;
+  --good:#1b7f4b;--good-soft:#dff3e7;--warn:#9a5d00;--warn-soft:#fcefd4;--bad:#b3261e;--bad-soft:#fbe3e1;
+  --sh:0 1px 2px rgba(15,39,66,.05),0 6px 18px rgba(15,39,66,.06);
+  --font:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c141c;--panel:#131f2a;--ink:#e5ecf2;--mute:#94a5b2;--line:#233340;--soft:#18252f;
+  --accent:#8fb4e0;--accent-soft:#1b2c3d;--gold-soft:#3a2f17;
+  --good:#5bc98f;--good-soft:#163527;--warn:#e7b04c;--warn-soft:#3a2e12;--bad:#f08178;--bad-soft:#3d1c1a;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c141c;--panel:#131f2a;--ink:#e5ecf2;--mute:#94a5b2;--line:#233340;--soft:#18252f;
+  --accent:#8fb4e0;--accent-soft:#1b2c3d;--gold-soft:#3a2f17;
+  --good:#5bc98f;--good-soft:#163527;--warn:#e7b04c;--warn-soft:#3a2e12;--bad:#f08178;--bad-soft:#3d1c1a;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--font);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;text-wrap:balance}
+h3{font-size:15px}
+.app{display:grid;grid-template-columns:236px 1fr;height:100%}
+.side{background:linear-gradient(180deg,var(--navy),var(--navy2));color:#d3dfeb;display:flex;flex-direction:column;overflow-y:auto}
+.brand{padding:22px 20px 12px;color:#fff;font-weight:700;font-size:17px}
+.brand:before{content:'';display:block;width:34px;height:3px;background:var(--gold);border-radius:2px;margin-bottom:10px}
+.brand small{display:block;font-weight:500;color:#9fb6cc;font-size:12px}
+.nav{display:flex;flex-direction:column;gap:1px;padding:4px 12px 14px}
+.nav .grp{color:#7f9ab3;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;padding:14px 12px 4px}
+.nav button{all:unset;cursor:pointer;padding:8px 12px;border-radius:9px;color:#c2d3e3;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav button.on{background:rgba(224,176,79,.17);color:#ffe2a6;font-weight:600;box-shadow:inset 3px 0 0 var(--gold)}
+.nav button:focus-visible{outline:2px solid var(--gold)}
+.nav .cnt{background:var(--gold);color:var(--gold-ink);border-radius:10px;font-size:11px;font-weight:700;padding:0 7px;line-height:18px}
+.me{margin-top:auto;padding:12px 18px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#9fb6cc}
+.me b{display:block;color:#fff;font-size:13px}
+.main{overflow-y:auto;padding:24px 30px 70px;min-width:0}
+.head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.head h1{font-size:22px;letter-spacing:-.01em}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.btn{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:7px 13px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--gold-ink);font-weight:600}
+.btn.bad{color:var(--bad)}
+.btn.sm{padding:3px 10px;font-size:12.5px}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+input,select,textarea{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:7px 10px;min-width:0;width:100%}
+.bar input,.bar select{width:auto}
+.bar input[type=search]{min-width:200px}
+textarea{min-height:64px;resize:vertical}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--sh)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.tile{position:relative;overflow:hidden;padding:14px 16px 14px 20px}
+.tile:before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold)}
+.tile.click{cursor:pointer}.tile.click:hover{border-color:var(--gold)}
+.tile .l{color:var(--mute);font-size:12.5px;font-weight:500}
+.tile .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;letter-spacing:-.01em}
+.tile .s{font-size:12px;color:var(--mute)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tw{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--sh);-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{position:sticky;top:0;z-index:2;background:var(--panel);color:var(--mute);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;border-bottom:2px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even) td{background:var(--soft)}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover td{background:var(--accent-soft)}
+tbody tr.dim td{opacity:.5}
+tbody tr.hl td{background:var(--warn-soft)}
+.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nw{white-space:nowrap}
+td.w{min-width:230px}td.w2{min-width:300px}
+.pill{display:inline-block;border-radius:10px;padding:0 9px;font-size:12px;line-height:20px;font-weight:600;background:var(--soft);color:var(--mute);white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.pill.gold{background:var(--gold-soft);color:var(--warn)}
+.mute{color:var(--mute)}.neg{color:var(--bad)}.pos{color:var(--good)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{all:unset;cursor:pointer;padding:6px 15px;border-radius:16px;border:1px solid var(--line);background:var(--panel);font-weight:600;color:var(--mute)}
+.tabs button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.tabs button:focus-visible{outline:2px solid var(--gold)}
+.note{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);margin-bottom:12px;font-size:13.5px}
+.row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.empty{padding:30px 16px;text-align:center;color:var(--mute)}
+.ov{position:fixed;inset:0;background:rgba(8,18,28,.55);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow-y:auto;z-index:20}
+.dlg{background:var(--panel);border-radius:16px;width:100%;max-width:560px;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.dlg.wide{max-width:1000px}
+.dh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dh h2{font-size:16px}
+.db{padding:16px 18px}
+.df{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.f{display:flex;flex-direction:column;gap:3px}
+.f>span{font-size:12px;color:var(--mute);font-weight:500}
+.f.full{grid-column:1/-1}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;z-index:40;max-width:90vw}
+.toast.bad{background:var(--bad);color:#fff}
+.prog{position:sticky;top:-24px;z-index:6;margin:-6px 0 12px;background:var(--gold-soft);color:var(--warn);border:1px solid var(--gold);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px}
+.hero{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-radius:16px;padding:18px 22px;margin-bottom:14px;box-shadow:var(--sh)}
+.hero .hi{font-size:19px;font-weight:700}.hero .sub{color:#a9bfd4;font-size:13px;text-transform:capitalize}
+.chip{all:unset;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;border-radius:20px;padding:6px 14px;font-size:13px}
+.chip b{font-size:15px;margin-right:3px}.chip:hover{background:rgba(255,255,255,.2)}
+.chip.hot{background:var(--gold);color:var(--gold-ink)}
+.grpcard{margin-bottom:12px}
+.center{max-width:480px;margin:12vh auto;text-align:center;padding:0 16px}
+code{font-size:12px;background:var(--soft);padding:1px 5px;border-radius:5px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mute)}.chk input{width:auto}
+/* iPad và màn hình hẹp: bảng cuộn ngang, chữ tự xuống dòng */
+@media (max-width:1180px){
+  .app{grid-template-columns:200px 1fr}
+  .main{padding:18px 16px 70px}
+  .tw table{min-width:980px}
+  td{white-space:normal;overflow-wrap:break-word;word-break:normal;font-size:13px;padding:7px 9px;min-width:64px}
+  td:first-child{min-width:0}
+  .tile .v{font-size:18px}
+  th{padding:7px 9px}
+  td.r{white-space:nowrap}
+  .nav button{font-size:13.5px;padding:7px 10px}
+  .grid2{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .side{flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:center;position:sticky;top:0;z-index:8}
+  .brand{padding:8px 14px;white-space:nowrap;font-size:15px}.brand:before,.brand small{display:none}
+  .nav{flex-direction:row;padding:6px}.nav .grp{display:none}
+  .nav button{white-space:nowrap;padding:7px 12px}
+  .nav button.on{box-shadow:inset 0 -3px 0 var(--gold)}
+  .me{display:none}
+  .main{padding:14px 12px 70px}.head h1{font-size:19px}
+  .tile .v{font-size:18px}.hero{padding:14px 16px}
+  .bar input[type=search]{min-width:0;flex:1 1 100%}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tile{padding:10px 12px 10px 16px}
+}
+@media print{.side,.bar,.btn{display:none}.tw{max-height:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"><div class="center mute">Đang tải dữ liệu…</div></div>
+<div id="layer"></div>
+<script>
+'use strict';
+/* ================= Tiện ích ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const n=typeof v==='number'?v:parseFloat(String(v??'').replace(/[^\d.\-]/g,''));return isFinite(n)?n:0};
+const vnd=n=>new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0}).format(Math.round(n||0));
+const qf=n=>new Intl.NumberFormat('vi-VN',{maximumFractionDigits:3}).format(+(n||0));
+const p2=n=>String(n).padStart(2,'0');
+const dstr=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+const today=()=>dstr(new Date());
+const dmy=iso=>iso?String(iso).slice(0,10).split('-').reverse().join('/'):'';
+const days=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().trim();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const arr=o=>Object.entries(o||{}).map(([id,d])=>({id,...d}));
+const sum=(a,f)=>a.reduce((s,x)=>s+num(f(x)),0);
+const digits=s=>String(s||'').replace(/\D/g,'');
+function h32(s,k){let h=k?0:5381;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h=k?((c+(h<<6)+(h<<16)-h)>>>0):(((h<<5)+h+c)>>>0)}return h.toString(36)}
+const ivId=k=>'iv'+h32(k,0)+h32(k,1);
+const txKey=(acc,date,amount,desc,bal)=>[acc,date,Math.round(num(amount)),norm(desc).replace(/\s+/g,' ').slice(0,60),bal===undefined||bal===''||bal===null?'':Math.round(num(bal))].join('|');
+const txId=k=>'bt'+h32(k,0)+h32(k,1);
+const START='2026-01-01';
+const COMPANY={name:'Công ty TNHH Thi Đạt',mst:'0312510655'};
+const OURMST=()=>digits((S.settings.company||{}).mst||COMPANY.mst);
+
+/* ================= Trạng thái ================= */
+const COLS=['bank','bankTx','invoices','items','convs','inbox','users','requests','partners','quotes','contracts','staff'];
+const S={settings:{},sync:{},syncReq:null,log:{}};COLS.forEach(c=>S[c]={});
+let db=null,usr=null,dl=null,me=null,role=null,ver=0,view='dash',names={};
+const st={}; // bộ lọc theo màn hình
+const VIEWS={},A={};
+const canWrite=()=>role==='admin'||role==='ketoan';
+const ROLES={admin:'Quản trị',ketoan:'Kế toán',xem:'Chỉ xem'};
+
+/* ================= Ghi dữ liệu ================= */
+async function retry(f){for(let a=0;;a++){try{return await f()}catch(e){if(e&&(e.code==='resource_exhausted'||e.code==='unavailable')&&a<6){await sleep(700*(a+1)+Math.random()*500);continue}throw e}}}
+const put=(c,id,d)=>retry(()=>db.doc(c+'/'+id).set(d));
+const patch=(c,id,d)=>retry(()=>db.doc(c+'/'+id).update(d));
+const del=(c,id)=>retry(()=>db.doc(c+'/'+id).delete());
+async function pool(items,fn,n,onProg){let i=0,done=0;const w=async()=>{while(i<items.length){const k=i++;await fn(items[k]);done++;if(onProg&&(done%10===0||done===items.length))onProg(done,items.length)}};await Promise.all(Array.from({length:Math.min(n||4,items.length||1)},w))}
+async function logAct(text){try{await db.collection('log').add({at:new Date().toISOString(),uid:me,text})}catch(e){}}
+function nextCode(col,prefix,len){let m=0;for(const d of Object.values(S[col])){const mm=String(d.code||'').match(/(\d+)$/);if(mm&&String(d.code).startsWith(prefix)&&+mm[1]>m)m=+mm[1]}return prefix+String(m+1).padStart(len,'0')}
+
+/* ================= Giao diện chung ================= */
+function toast(msg,kind){const t=document.createElement('div');t.className='toast '+(kind||'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),kind==='bad'?5500:2800)}
+const pill=(t,k)=>`<span class="pill ${k||''}">${esc(t)}</span>`;
+function table(heads,rows,opt={}){
+  if(!rows.length)return `<div class="tw"><div class="empty">${opt.empty||'Chưa có dữ liệu.'}</div></div>`;
+  const lim=opt.limit||800,more=rows.length>lim;
+  return `<div class="tw"><table><thead><tr>${heads.map(h=>`<th class="${h[1]||''}">${h[0]}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,lim).map(r=>`<tr class="${[r.act?'click':'',r.cls||''].join(' ')}" ${r.act?`data-act="${r.act}" data-id="${esc(r.id)}"`:''}>${r.c.map((x,i)=>`<td class="${heads[i][1]||''}">${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${more?`<p class="mute">Đang hiện ${lim} trên ${rows.length} dòng. Thu hẹp ngày hoặc gõ tìm kiếm để xem thêm.</p>`:''}`;
+}
+const F=(id,label,val='',o={})=>`<label class="f ${o.cls||''}"><span>${label}</span>${
+  o.type==='select'?`<select id="${id}">${o.opts.map(([v,t])=>`<option value="${esc(v)}"${String(v)===String(val)?' selected':''}>${esc(t)}</option>`).join('')}</select>`
+  :o.type==='area'?`<textarea id="${id}">${esc(val)}</textarea>`
+  :`<input id="${id}" type="${o.type||'text'}" value="${esc(val)}" ${o.attr||''}>`}</label>`;
+const V=id=>{const e=$('#'+id,$('#layer'));return e?e.value.trim():''};
+let modalClose=null;
+function modal({title,body,ok='Lưu',onOk,wide,extra=''}){
+  closeModal();const l=$('#layer');
+  l.innerHTML=`<div class="ov"><div class="dlg ${wide?'wide':''}" role="dialog" aria-modal="true"><div class="dh"><h2>${title}</h2><button class="btn sm" data-act="close">Đóng</button></div><div class="db">${body}</div>${onOk||extra?`<div class="df">${extra}${onOk?`<button class="btn pri" id="okbtn">${ok}</button>`:''}</div>`:''}</div></div>`;
+  const b=$('#okbtn');if(b)b.onclick=async()=>{b.disabled=true;try{const r=await onOk();if(r!==false)closeModal()}catch(e){console.error(e);toast('Lỗi: '+(e&&e.message||'không lưu được'),'bad')}finally{b.disabled=false}};
+}
+function closeModal(){$('#layer').innerHTML='';if(modalClose)modalClose();modalClose=null}
+function confirmBox(text,yes='Đồng ý'){return new Promise(res=>{const d=document.createElement('div');d.className='ov';d.style.zIndex=30;
+  d.innerHTML=`<div class="dlg"><div class="db">${text}</div><div class="df"><button class="btn" id="cn">Hủy</button><button class="btn pri" id="cy">${yes}</button></div></div>`;
+  document.body.appendChild(d);$('#cn',d).onclick=()=>{d.remove();res(false)};$('#cy',d).onclick=()=>{d.remove();res(true)}})}
+let progText='';function setProg(t){progText=t||'';const p=$('#prog');if(p){p.textContent=progText;p.style.display=progText?'':'none'}}
+async function loadScript(url){if(document.querySelector(`script[src="${url}"]`))return;await new Promise((ok,no)=>{const s=document.createElement('script');s.src=url;s.onload=ok;s.onerror=()=>no(new Error('Không tải được thư viện Excel'));document.head.appendChild(s)})}
+const XLSXURL='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+async function exportXlsx(filename,sheets){
+  if(!dl)return toast('Chế độ xem này không hỗ trợ tải file','bad');
+  await loadScript(XLSXURL);const wb=XLSX.utils.book_new(),used=new Set();
+  for(const [n0,rows] of Object.entries(sheets)){let n=String(n0).replace(/[\[\]:*?\/\\]/g,' ').slice(0,31),k=2;while(used.has(n)){n=String(n0).slice(0,27)+' ('+k+++')'}used.add(n);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{'Ghi chú':'Không có dữ liệu'}]),n)}
+  try{await dl.save({filename,data:XLSX.write(wb,{type:'array',bookType:'xlsx'})})}catch(e){if(e&&e.code!=='declined')toast('Không tải được: '+(e.message||e.code),'bad')}
+}
+async function readAoa(file){await loadScript(XLSXURL);const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:'',raw:true})}
+function parseDate(v){
+  if(v instanceof Date)return dstr(v);
+  if(typeof v==='number'&&v>30000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return d.getUTCFullYear()+'-'+p2(d.getUTCMonth()+1)+'-'+p2(d.getUTCDate())}
+  const m=String(v||'').match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);if(m)return m[3]+'-'+p2(m[2])+'-'+p2(m[1]);
+  const m2=String(v||'').match(/(\d{4})-(\d{2})-(\d{2})/);return m2?m2[0]:null;
+}
+function moneyNum(v){
+  if(typeof v==='number')return v;let s=String(v??'').trim().replace(/[^\d.,\-]/g,'');if(!s||s==='-')return 0;
+  const neg=s.startsWith('-');s=s.replace(/-/g,'');
+  if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s))s=s.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s))s=s.replace(/,/g,'');else s=s.replace(/,/g,'.');
+  const n=parseFloat(s)||0;return neg?-n:n;
+}
+const dateBar=()=>{const k=view;return `<input type="date" aria-label="Từ ngày" data-bind="${k}_f" value="${st[k+'_f']||START}"><span class="mute">đến</span><input type="date" aria-label="Đến ngày" data-bind="${k}_t" value="${st[k+'_t']||today()}">`};
+const rng=()=>[st[view+'_f']||START,st[view+'_t']||today()];
+const inR=(d,[f,t])=>d&&d>=f&&d<=t;
+
+/* ================= Ngân hàng: danh mục tài khoản ================= */
+const ACCS=[['cty','MBBank','6868'],['cty','Vietcombank','7979'],['cty','LPBank','0002'],['cty','ACB','7499'],
+ ['canhan','MBBank','1571'],['canhan','Vietcombank','1571'],['canhan','VietinBank','5571'],['canhan','TPBank','3934'],['canhan','TPBank','CN2'],['canhan','ACB','2689']];
+function bkCode(n){n=norm(n).replace(/\s/g,'');if(/^mb/.test(n))return'MB';if(/vietcom|^vcb/.test(n))return'VCB';if(/vietin|^ctg|^vtb/.test(n))return'Vietin';if(/^tp/.test(n))return'TPBank';if(/^acb/.test(n))return'ACB';if(/^lp|lienviet/.test(n))return'LPBank';return n.toUpperCase()}
+const last4=a=>{const s=String(a.accountNo||'').toUpperCase();return /^\d+$/.test(s)?s.slice(-4):s};
+const accName=id=>{const a=S.bank[id];return a?`${bkCode(a.bankName)} ${last4(a)}`:'?'};
+const accType=id=>(S.bank[id]&&S.bank[id].type)||'cty';
+const findAcc=(bankName,l4)=>arr(S.bank).find(a=>bkCode(a.bankName)===bkCode(bankName)&&String(a.accountNo||'').toUpperCase().endsWith(String(l4||'').toUpperCase()));
+const accOrder=a=>{const i=ACCS.findIndex(x=>bkCode(x[1])===bkCode(a.bankName)&&last4(a)===x[2]);return i<0?99:i};
+const accList=type=>arr(S.bank).filter(a=>!type||(a.type||'cty')===type).sort((x,y)=>accOrder(x)-accOrder(y)||accName(x.id).localeCompare(accName(y.id)));
+async function seedAccounts(){ // bảo đảm đủ 10 tài khoản đúng loại; chỉ lưu 4 số cuối
+  for(const [type,bankName,l4] of ACCS){const a=findAcc(bankName,l4);
+    if(!a){const id=uid();const d={bankName,accountNo:l4,type,name:type==='cty'?'Công ty TNHH Thi Đạt':'Tài khoản cá nhân',opening:0};await put('bank',id,d);S.bank[id]=d;continue}
+    const fix={};if((a.type||'cty')!==type)fix.type=type;if(String(a.accountNo||'').length>4&&/^\d+$/.test(a.accountNo))fix.accountNo=last4(a);
+    if(Object.keys(fix).length){await patch('bank',a.id,fix);Object.assign(S.bank[a.id],fix)}}
+  ver++;
+}
+const isDup=t=>t.dup==='yes';
+const liveTx=()=>arr(S.bankTx).filter(t=>!isDup(t));
+function balOf(accId){const mine=arr(S.bankTx).filter(t=>t.accountId===accId&&!isDup(t));
+  const wb=mine.filter(t=>t.balance!==undefined&&t.balance!==''&&t.balance!==null).sort((x,y)=>String(y.date).localeCompare(String(x.date))||(num(y.seq)-num(x.seq)))[0];
+  return wb?num(wb.balance):num((S.bank[accId]||{}).opening)+sum(mine,t=>t.amount)}
+
+/* ================= Hóa đơn: tiện ích ================= */
+const invKey=i=>[i.dir,i.symbol||'',i.no,i.dir==='in'?i.mst:OURMST()].join('|');
+const BADINV=i=>{const s=String(i.status||'');return /BTT|ĐH/.test(s)||/huy|bi thay the/.test(norm(s))};
+const invLines=i=>Array.isArray(i.lines)?i.lines:[];
+const goodInv=dir=>arr(S.invoices).filter(i=>(!dir||i.dir===dir)&&!BADINV(i));
+const partyKey=i=>digits(i.mst).length>=9?String(i.mst).trim():'N:'+norm(i.partyName);
+
+/* --- Quy đổi đơn vị / mã hàng --- */
+const cvId=(name,unit)=>'cv'+ivId('cv|'+norm(name)+'|'+norm(unit)).slice(2);
+const cvOf=(name,unit)=>S.convs[cvId(name,unit)];
+function conv(l){
+  const c=cvOf(l.name,l.unit),amt=num(l.amount)||num(l.qty)*num(l.price);
+  if(!c)return{name:l.name,code:'',unit:l.unit||'',qty:num(l.qty),amount:amt,cv:false};
+  const it=c.itemId&&S.items[c.itemId],f=num(c.factor)||1,q=num(l.qty)*f;
+  return{name:it?it.name:l.name,code:it?it.code:'',unit:c.to||(it&&it.unit)||l.unit||'',qty:q,amount:amt,cv:true,from:l.unit||'',f};
+}
+/* Bảng quy cách ống đồng: kg trên cuộn 15 m */
+const OD=[['Ống đồng thường','6.35',[['0.61',1.42],['0.71',1.61],['0.81',1.77],['1.02',2.20]]],['Ống đồng thường','9.52',[['0.61',2.18],['0.71',2.53],['0.81',2.84],['1.02',3.51]]],['Ống đồng thường','12.7',[['0.61',2.94],['0.71',3.43],['0.81',3.90],['1.02',4.82]]],['Ống đồng thường','15.88',[['0.71',4.35],['0.81',4.95],['1.02',6.10]]],['Ống đồng thường','19.05',[['0.71',5.28],['0.81',5.85],['1.02',7.46]]],
+ ['Ống đồng Thái','6.35',[['0.50',1.20],['0.55',1.32],['0.60',1.45],['0.65',1.54],['0.70',1.65],['0.80',1.90]]],['Ống đồng Thái','7.94',[['0.50',1.57],['0.55',1.66],['0.70',2.10],['1.02',2.94]]],['Ống đồng Thái','9.52',[['0.50',1.85],['0.55',2.04],['0.60',2.23],['0.65',2.42],['0.70',2.59],['0.80',2.90],['1.02',3.60]]],['Ống đồng Thái','12.7',[['0.60',3.00],['0.65',3.26],['0.70',3.53],['0.80',3.95]]],['Ống đồng Thái','15.88',[['0.70',4.46],['0.80',5.00],['1.02',6.30]]],['Ống đồng Thái','19.05',[['0.70',5.36],['0.80',6.07],['1.02',7.62]]]];
+const ODL=[];OD.forEach(([g,d,l])=>l.forEach(([t,kg])=>ODL.push({lbl:`${g} Ø${d} dày ${t} mm · cuộn 15 m = ${kg} kg (${(15/kg).toFixed(2)} m/kg)`,kg})));
+const UNIT_SUG=['m','kg','cuộn','cái','bộ','cây','thùng','lít','bao','tấm','hộp'];
+/* độ giống tên: số phải khớp, chữ giống từ 50% */
+const tokOf=n=>norm(n).replace(/(\d),(\d)/g,'$1.$2').replace(/[^a-z0-9. ]/g,' ').split(/\s+/).map(x=>x.replace(/^\.+|\.+$/g,'')).filter(x=>x&&!['va','cho','loai','hang','mau'].includes(x));
+function simScore(a,b){const na=a.filter(x=>/\d/.test(x)).sort().join(' '),nb=b.filter(x=>/\d/.test(x)).sort().join(' ');if(na!==nb)return 0;
+  const A=new Set(a),B=new Set(b);let k=0;A.forEach(x=>{if(B.has(x))k++});return k/Math.max(1,A.size+B.size-k)}
+const simItems=name=>{const a=tokOf(name);return arr(S.items).map(it=>{let s=simScore(a,tokOf(it.name));
+  arr(S.convs).filter(c=>c.itemId===it.id).forEach(c=>{s=Math.max(s,simScore(a,tokOf(c.name)))});return{it,s}}).filter(x=>x.s>=.45).sort((x,y)=>y.s-x.s).slice(0,4)};
+
+/* ================= Tính toán dùng chung (lưu đệm theo phiên bản dữ liệu) ================= */
+let memo={v:-1};
+function M(){
+  if(memo.v===ver)return memo;const m={v:ver};
+  // đối tác lấy từ hóa đơn thật
+  const P={};goodInv().forEach(i=>{const k=partyKey(i),p=P[k]=P[k]||{key:k,name:i.partyName||'',mst:digits(i.mst).length>=9?i.mst:'',out:0,in:0,nOut:0,nIn:0,last:''};
+    if(i.dir==='out'){p.out+=num(i.total);p.nOut++}else{p.in+=num(i.total);p.nIn++}if(!p.name&&i.partyName)p.name=i.partyName;if((i.date||'')>p.last)p.last=i.date});
+  m.parties=P;
+  const STOP=/\b(cong ty|cty|tnhh|co phan|cp|mtv|mot thanh vien|thuong mai|dich vu|xay dung|san xuat|ky thuat|tm|dv|xd|sx|va|chi nhanh|tp|thanh pho|ho chi minh|hcm|viet nam)\b/g;
+  const plist=Object.values(P).map(p=>({p,mst:digits(p.mst),core:norm(p.name).replace(/[^a-z0-9 ]/g,' ').replace(STOP,' ').replace(/\s+/g,'')})).filter(x=>x.mst.length>=9||x.core.length>=6);
+  const invNo={in:[],out:[]};goodInv().forEach(i=>{const n=String(i.no||'').replace(/^0+/,'');if(n.length>=3)invNo[i.dir].push({n,k:partyKey(i)})});
+  m.partyOf={};
+  arr(S.bankTx).forEach(t=>{
+    if(t.party!==undefined&&t.party!==''){m.partyOf[t.id]=t.party==='-'?'':t.party;return}
+    const ds=norm(t.desc).replace(/[^a-z0-9]/g,''),wantOut=num(t.amount)>0;let best='',bs=0;
+    for(const x of plist){if(wantOut?!x.p.nOut:!x.p.nIn)continue;let s=0;
+      if(x.mst.length>=9&&ds.includes(x.mst))s=100;else if(x.core.length>=6&&ds.includes(x.core.slice(0,16)))s=x.core.length;
+      if(s>bs){bs=s;best=x.p.key}}
+    if(!best){const l=invNo[wantOut?'out':'in'];const hd=/(?:hd|hoadon|sohd|inv)0*(\d{3,})/.exec(ds);if(hd){const f=l.find(z=>z.n===hd[1]);if(f)best=f.k}}
+    m.partyOf[t.id]=best});
+  // công nợ
+  const debt={};Object.values(P).forEach(p=>debt[p.key]={p,paidIn:0,paidOut:0});
+  liveTx().forEach(t=>{const k=m.partyOf[t.id];if(!k||!debt[k])return;if(num(t.amount)>0)debt[k].paidIn+=num(t.amount);else debt[k].paidOut+=-num(t.amount)});
+  m.kh=Object.values(debt).filter(d=>d.p.out>0).map(d=>({...d,owe:d.p.out-d.paidIn})).sort((a,b)=>b.owe-a.owe);
+  m.ncc=Object.values(debt).filter(d=>d.p.in>0).map(d=>({...d,owe:d.p.in-d.paidOut})).sort((a,b)=>b.owe-a.owe);
+  m.dups=dupGroups(m);m.pend=m.dups.filter(g=>g.items.some(t=>!t.dup));
+  return(memo=m);
+}
+const partyName=k=>{if(!k)return'';const p=M().parties[k];return p?p.name||('MST '+p.mst):k.replace(/^N:/,'')};
+/* Thanh toán nghi trùng: chi từ 200.000 đ, cùng số tiền, trong 3 ngày, cùng số hóa đơn hoặc cùng đối tác */
+const DUPMIN=200000;
+const hdTok=d=>{const m=/\b(?:hd|hoa don|hoadon|so hd|inv)\s*(?:so)?\s*[:#.]?\s*0*(\d{3,})/.exec(norm(d));return m?m[1]:''};
+const descCore=d=>norm(d).replace(/\d+/g,' ').replace(/\b(ck|chuyen khoan|chuyen tien|thanh toan|tt|ft|trace|ma gd|ma giao dich|ibft|tu|den|cho|tai|ngay|so)\b/g,' ').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();
+function dupGroups(m){
+  const by={};arr(S.bankTx).filter(t=>num(t.amount)<=-DUPMIN).forEach(t=>{const k=Math.round(-num(t.amount));(by[k]=by[k]||[]).push(t)});
+  const out=[];
+  Object.entries(by).forEach(([amt,l])=>{if(l.length<2)return;l.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const par=l.map((_,i)=>i),f=i=>par[i]===i?i:(par[i]=f(par[i]));const why={};
+    for(let i=0;i<l.length;i++)for(let j=i+1;j<l.length;j++){const a=l[i],b=l[j];if(days(a.date,b.date)>3)break;
+      const ha=hdTok(a.desc),hb=hdTok(b.desc),pa=m.partyOf[a.id],pb=m.partyOf[b.id],ca=descCore(a.desc),cb=descCore(b.desc);
+      let w='';if(ha&&hb&&ha!==hb)continue;if(ha&&ha===hb)w='cùng số hóa đơn '+ha;else if(pa&&pa===pb)w='cùng đối tác';else if(ca.length>=8&&ca.slice(0,24)===cb.slice(0,24))w='cùng người nhận';
+      if(w){const r=f(j);par[f(i)]=r;why[r]=w}}
+    const g={};l.forEach((t,i)=>{(g[f(i)]=g[f(i)]||[]).push(t)});
+    Object.entries(g).filter(([,x])=>x.length>1).forEach(([r,x])=>out.push({amt:+amt,items:x,why:why[f(+r)]||why[r]||'cùng số tiền',date:x[0].date}))});
+  return out.sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+/* ================= TỔNG QUAN ================= */
+VIEWS.dash={title:'Tổng quan',bar:()=>'',body(){
+  const m=M(),y=x=>(x.date||'').startsWith('2026');
+  const io=goodInv('out').filter(y),ii=goodInv('in').filter(y);
+  const tx=liveTx().filter(y);
+  const accRows=accList().map(a=>{const t=tx.filter(x=>x.accountId===a.id);return{a,inn:sum(t.filter(x=>x.amount>0),x=>x.amount),out:sum(t.filter(x=>x.amount<0),x=>-x.amount),n:t.length}});
+  const grp=ty=>accRows.filter(r=>(r.a.type||'cty')===ty);
+  const khOver=m.kh.filter(x=>x.owe>1000).length;
+  const hero=`<div class="hero"><div><div class="hi">Xin chào${names[me]?', '+esc(names[me]):''}</div><div class="sub">${new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'})}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip ${m.pend.length?'hot':''}" data-act="wGo" data-id="dup"><b>${m.pend.length}</b> nhóm nghi trùng</button><button class="chip" data-act="wGo" data-id="kh"><b>${khOver}</b> khách còn nợ</button></div></div>`;
+  const tile=(l,v,s,act,id)=>`<div class="card tile ${act?'click':''}" ${act?`data-act="${act}" data-id="${id}"`:''}><div class="l">${l}</div><div class="v">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`;
+  return hero+`<div class="tiles">${tile('Hóa đơn đầu ra 2026',vnd(sum(io,i=>i.total))+' đ',io.length+' hóa đơn · thuế '+vnd(sum(io,i=>i.vat))+' đ','go','hdout')}${tile('Hóa đơn đầu vào 2026',vnd(sum(ii,i=>i.total))+' đ',ii.length+' hóa đơn · thuế '+vnd(sum(ii,i=>i.vat))+' đ','go','hdin')}${tile('Ngân hàng công ty 2026','<span class="pos">+'+vnd(sum(grp('cty'),r=>r.inn))+'</span>','Ra '+vnd(sum(grp('cty'),r=>r.out))+' đ','go','bankcty')}${tile('Ngân hàng cá nhân 2026','<span class="pos">+'+vnd(sum(grp('canhan'),r=>r.inn))+'</span>','Ra '+vnd(sum(grp('canhan'),r=>r.out))+' đ','go','bankcn')}</div>
+  <div class="grid2"><div><h3 style="margin-bottom:8px">Tiền vào, tiền ra theo ngân hàng (2026)</h3>${table([['Tài khoản'],['Loại'],['Vào','r'],['Ra','r'],['Số dư','r']],accRows.map(r=>({act:'accGo',id:r.a.id,c:[`<b class="nw">${esc(accName(r.a.id))}</b>`,r.a.type==='canhan'?pill('Cá nhân','gold'):pill('Công ty','acc'),vnd(r.inn),vnd(r.out),vnd(balOf(r.a.id))]})),{empty:'Chưa có tài khoản.'})}</div>
+  <div>${syncCard()}</div></div>`;
+}};
+function syncCard(){
+  const rows=[];const now=today();
+  const age=d=>d?days(d,now):999;
+  const stat=d=>{const a=age(d);return a<=3?pill('Mới','good'):a<=10?pill(a+' ngày trước','warn'):pill(d?'Cần cập nhật':'Chưa có','bad')};
+  const lastInv=dir=>goodInv(dir).map(i=>i.date).sort().pop()||'';
+  rows.push(['Hóa đơn đầu ra (eHoadon / BKAV)',lastInv('out'),goodInv('out').length+' HĐ']);
+  rows.push(['Hóa đơn đầu vào (cổng thuế GDT)',lastInv('in'),goodInv('in').length+' HĐ']);
+  accList().forEach(a=>{const t=arr(S.bankTx).filter(x=>x.accountId===a.id);rows.push(['Sao kê '+accName(a.id),t.map(x=>x.date).sort().pop()||'',t.length+' GD'])});
+  const pending=arr(S.inbox).filter(d=>!d.done&&(d.kind||d.bankName)).length;
+  return `<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px"><h3>Cập nhật dữ liệu</h3>${canWrite()?`<span>${S.syncReq&&S.syncReq.status==='pending'?pill('Đã gửi yêu cầu','warn')+' ':''}<button class="btn sm gold" data-act="syncNow">Cập nhật ngay</button></span>`:''}</div>
+  <p class="mute" style="margin:0 0 6px;font-size:12.5px">Nguồn: eHoadon, BKAV, cổng thuế GDT và thư mục OneDrive "THI DAT" (QLBH, NGÂN HÀNG, KIOTVIET, 2026). Phần mềm chỉ đọc, không đổi tên hay di chuyển thư mục.${pending?` <b>${pending} gói dữ liệu đang chờ nạp.</b>`:''}</p>
+  ${rows.map(r=>`<div class="row"><span style="min-width:112px">${stat(r[1])}</span><span style="flex:1">${esc(r[0])}<br><span class="mute" style="font-size:12px">${r[1]?'Dữ liệu đến '+dmy(r[1]):'Chưa có dữ liệu'} · ${r[2]}</span></span></div>`).join('')}</div>`;
+}
+A.syncNow=async()=>{await db.doc('sync/request').set({status:'pending',at:new Date().toISOString(),by:me});logAct('bấm Cập nhật ngay');toast('Đã gửi yêu cầu cập nhật. Dữ liệu mới sẽ tự về khi tác vụ tự động chạy.')};
+A.accGo=d=>{st.ba=d.id;go(accType(d.id)==='canhan'?'bankcn':'bankcty')};
+
+/* ================= CẢNH BÁO ================= */
+VIEWS.warn={title:'Cảnh báo',bar(){const m=M(),t=st.wt||'dup';const b=(k,l,n,c)=>`<button class="${t===k?'on':''}" data-act="wTab" data-id="${k}">${l}${n?' '+pill(n,c):''}</button>`;
+  return `<div class="tabs">${b('dup','Thanh toán nghi trùng',m.pend.length,'bad')}${b('kh','Công nợ khách hàng',m.kh.filter(x=>x.owe>1000).length,'warn')}${b('ncc','Công nợ nhà cung cấp',m.ncc.filter(x=>x.owe>1000).length,'warn')}${b('done','Đã xử lý trùng')}</div>`},
+ body(){const m=M(),t=st.wt||'dup';
+  if(t==='kh'||t==='ncc'){const kh=t==='kh',l=(kh?m.kh:m.ncc).filter(x=>Math.abs(x.owe)>1000);const pos=l.filter(x=>x.owe>0);
+    return `<div class="note">${pill('Cách tính','acc')}<span>${kh?'Tổng hóa đơn đầu ra':'Tổng hóa đơn đầu vào'} của từng đối tác (theo MST) trừ ${kh?'tiền vào':'tiền chi ra'} ngân hàng đã khớp với đối tác đó. Phần mềm tự khớp theo MST, tên hoặc số hóa đơn trong nội dung chuyển khoản; giao dịch nào khớp sai, chị mở giao dịch ở mục Ngân hàng để gán lại. Chưa gồm nợ đầu kỳ trước 2026 và thanh toán tiền mặt.</span></div>
+    <div class="tiles"><div class="card tile"><div class="l">${kh?'Khách còn nợ':'Còn nợ nhà cung cấp'}</div><div class="v">${vnd(sum(pos,x=>x.owe))} đ</div><div class="s">${pos.length} đối tác</div></div><div class="card tile"><div class="l">${kh?'Khách trả dư / trả trước':'Đã trả dư / trả trước'}</div><div class="v">${vnd(-sum(l.filter(x=>x.owe<0),x=>x.owe))} đ</div><div class="s">${l.filter(x=>x.owe<0).length} đối tác</div></div></div>`+
+    table([['Đối tác','w'],['MST'],['Số HĐ','r'],['Tổng hóa đơn','r'],[kh?'Đã thu':'Đã trả','r'],['Còn lại','r'],['HĐ gần nhất']],l.map(x=>({act:'partyView',id:x.p.key,c:[esc(x.p.name),esc(x.p.mst),kh?x.p.nOut:x.p.nIn,vnd(kh?x.p.out:x.p.in),vnd(kh?x.paidIn:x.paidOut),`<b class="${x.owe>0?'neg':'pos'}">${vnd(x.owe)}</b>`,dmy(x.p.last)]})),{empty:'Không có công nợ.'});}
+  const L=t==='done'?m.dups.filter(g=>!g.items.some(x=>!x.dup)):m.pend;
+  const head=t==='done'?'':`<div class="note">${pill('Quy tắc','warn')}<span>Lệnh <b>chi ra từ ${vnd(DUPMIN)} đ</b>, <b>cùng số tiền</b>, cách nhau <b>không quá 3 ngày</b>, và <b>cùng số hóa đơn hoặc cùng đối tác</b>. Chị xem từng nhóm rồi chọn <b>Trùng</b> (giao dịch bị loại khỏi mọi báo cáo) hoặc <b>Không trùng</b>.</span></div>`;
+  if(!L.length)return head+`<div class="card empty">${t==='done'?'Chưa có nhóm nào được xử lý.':'Không phát hiện thanh toán nghi trùng.'}</div>`;
+  const stt=x=>x.dup==='yes'?pill('Trùng','bad'):x.dup==='no'?pill('Không trùng','good'):pill('Chưa xem','warn');
+  return head+L.slice(0,200).map(g=>{const ids=g.items.map(x=>x.id).join(',');
+    return `<div class="card grpcard"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center"><span><b>Chi ${vnd(g.amt)} đ · ${g.items.length} lần</b> <span class="mute">· ${esc(g.why)}</span></span>${canWrite()?`<button class="btn sm" data-act="dupSet" data-id="${ids}" data-v="no">Cả nhóm không trùng</button>`:''}</div>`+
+    table([[canWrite()?'Xác nhận':'Trạng thái'],['Ngày'],['Tài khoản'],['Nội dung','w2'],['Số tiền','r']],g.items.map(x=>({c:[canWrite()?`<span class="nw">${stt(x)}</span><br><button class="btn sm" data-act="dupSet" data-id="${x.id}" data-v="yes">Trùng</button> <button class="btn sm" data-act="dupSet" data-id="${x.id}" data-v="no">Không trùng</button>${x.dup?` <button class="btn sm" data-act="dupSet" data-id="${x.id}" data-v="">Bỏ chọn</button>`:''}`:stt(x),dmy(x.date),esc(accName(x.accountId)),esc(x.desc||''),vnd(-x.amount)]})))+`</div>`}).join('');
+ }};
+A.wTab=d=>{st.wt=d.id;render()};A.wGo=d=>{st.wt=d.id;go('warn')};
+A.dupSet=async d=>{if(!canWrite())return;const ids=String(d.id).split(',');
+  try{for(const id of ids){await patch('bankTx',id,{dup:d.v});if(S.bankTx[id])S.bankTx[id].dup=d.v}ver++;
+    logAct((d.v==='yes'?'xác nhận trùng ':d.v==='no'?'xác nhận không trùng ':'bỏ đánh dấu ')+ids.length+' giao dịch');render()}catch(e){toast('Không lưu được: '+(e.message||e.code),'bad')}};
+A.partyView=d=>{const m=M(),p=m.parties[d.id];if(!p)return;
+  const inv=goodInv().filter(i=>partyKey(i)===d.id).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const tx=arr(S.bankTx).filter(t=>m.partyOf[t.id]===d.id).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  modal({title:esc(p.name||'Đối tác'),wide:true,body:`<p class="mute" style="margin-top:0">${p.mst?'MST '+esc(p.mst)+' · ':''}${p.nOut} HĐ đầu ra (${vnd(p.out)} đ) · ${p.nIn} HĐ đầu vào (${vnd(p.in)} đ)</p><h3 style="margin:6px 0">Hóa đơn</h3>`+
+   table([['Ngày'],['Chiều'],['Ký hiệu'],['Số'],['Tổng','r']],inv.map(i=>({act:'invView',id:i.id,c:[dmy(i.date),i.dir==='out'?'Ra':'Vào',esc(i.symbol||''),esc(i.no),vnd(i.total)]})))+
+   `<h3 style="margin:14px 0 6px">Giao dịch ngân hàng đã khớp</h3>`+table([['Ngày'],['Tài khoản'],['Nội dung'],['Số tiền','r']],tx.map(t=>({act:'txView',id:t.id,cls:isDup(t)?'dim':'',c:[dmy(t.date),esc(accName(t.accountId)),esc(t.desc||''),`<span class="${t.amount<0?'neg':'pos'}">${vnd(t.amount)}</span>`]})),{empty:'Chưa có giao dịch nào khớp với đối tác này.'})});
+};
+
+/* ================= HÓA ĐƠN ĐẦU VÀO / ĐẦU RA ================= */
+function invList(dir){const q=norm(st[view+'_q']||''),r=rng();
+  return arr(S.invoices).filter(i=>i.dir===dir&&inR(i.date,r)&&(st.showBad||!BADINV(i))&&(!q||norm(i.symbol+' '+i.no+' '+i.partyName+' '+i.mst+' '+(st.ivm==='ct'?invLines(i).map(x=>x.name).join(' '):'')).includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.no).localeCompare(String(a.no)))}
+const invBar=dir=>{const m=st.ivm||'tq';return `<div class="tabs"><button class="${m==='tq'?'on':''}" data-act="ivMode" data-id="tq">Tổng quát</button><button class="${m==='ct'?'on':''}" data-act="ivMode" data-id="ct">Chi tiết</button></div>${dateBar()}<input type="search" placeholder="Tìm số HĐ, tên, MST${m==='ct'?', hàng':''}" data-bind="${view}_q" value="${esc(st[view+'_q']||'')}"><label class="chk"><input type="checkbox" data-bind="showBad" ${st.showBad?'checked':''}> Hiện HĐ hủy, bị thay thế</label>${canWrite()?`<button class="btn" data-act="invImport" data-id="${dir}">Nạp hóa đơn (XML / Excel)</button>`:''}<button class="btn pri" data-act="invXlsx" data-id="${dir}">Xuất Excel</button>`};
+function invBody(dir){
+  const isIn=dir==='in',l=invList(dir),ok=l.filter(i=>!BADINV(i)),bad=arr(S.invoices).filter(i=>i.dir===dir&&BADINV(i)&&inR(i.date,rng())).length,nol=ok.filter(i=>!invLines(i).length).length;
+  const tiles=`<div class="tiles"><div class="card tile"><div class="l">Số hóa đơn</div><div class="v">${ok.length}</div><div class="s">${bad?bad+' HĐ hủy / bị thay thế không tính':'Đã bỏ HĐ hủy, bị thay thế'}</div></div><div class="card tile"><div class="l">Tiền hàng chưa thuế</div><div class="v">${vnd(sum(ok,i=>i.net))} đ</div></div><div class="card tile"><div class="l">Thuế GTGT</div><div class="v">${vnd(sum(ok,i=>i.vat))} đ</div></div><div class="card tile"><div class="l">Tổng thanh toán</div><div class="v">${vnd(sum(ok,i=>i.total))} đ</div>${nol?`<div class="s">${nol} HĐ chưa có chi tiết hàng</div>`:''}</div></div>`;
+  if((st.ivm||'tq')==='tq')return tiles+table([['Ngày'],['Ký hiệu'],['Số HĐ'],[isIn?'Người bán':'Người mua','w'],['MST'],['Chưa thuế','r'],['Thuế','r'],['Tổng','r'],['Dòng hàng','r'],['Trạng thái']],
+    l.map(i=>({act:'invView',id:i.id,cls:BADINV(i)?'dim':'',c:[`<span class="nw">${dmy(i.date)}</span>`,esc(i.symbol||''),esc(i.no),esc(i.partyName||''),esc(i.mst||''),vnd(i.net),vnd(i.vat),vnd(i.total),invLines(i).length||'<span class="mute">—</span>',BADINV(i)?pill(i.status||'Hủy','bad'):pill('Hợp lệ','good')]})),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});
+  const rows=[];ok.forEach(i=>invLines(i).forEach((x,k)=>rows.push({i,x,k})));
+  const unm=rows.filter(r=>!cvOf(r.x.name,r.x.unit)).length;
+  return tiles+(unm?`<div class="note">${pill('Cần gán mã','warn')}<span><b>${unm}</b> dòng hàng chưa gán mã. Bấm <b>Quy đổi</b> ở cột đầu để chọn mã hàng, đơn vị đích và hệ số. Gán một lần là mọi hóa đơn cùng tên, cùng đơn vị đều theo.</span></div>`:'')+
+   table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã hàng · quy đổi'],['Ngày'],['Số HĐ'],[isIn?'Người bán':'Người mua','w']],
+   rows.map(({i,x,k})=>{const c=conv(x);return{c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code||'—')}</b> ${qf(c.qty)} ${esc(c.unit)}${c.f!==1?` <span class="mute">(×${qf(c.f)})</span>`:''}`:'<span class="mute">Chưa gán</span>',`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:'Chưa có dòng hàng nào trong khoảng ngày này. Chi tiết hàng lấy từ file XML hóa đơn hoặc file chi tiết trong thư mục Thi Đạt.'});
+}
+VIEWS.hdin={title:'Hóa đơn đầu vào',bar:()=>invBar('in'),body:()=>invBody('in')};
+VIEWS.hdout={title:'Hóa đơn đầu ra',bar:()=>invBar('out'),body:()=>invBody('out')};
+A.ivMode=d=>{st.ivm=d.id;render()};
+A.invView=d=>{const i=S.invoices[d.id];if(!i)return;const isIn=i.dir==='in';
+  modal({title:`Hóa đơn ${esc(i.symbol||'')} ${esc(i.no)} ${BADINV(i)?pill(i.status||'Hủy','bad'):''}`,wide:true,body:`<p style="margin-top:0"><b>${esc(i.partyName||'')}</b>${i.mst?' · MST '+esc(i.mst):''} · ${dmy(i.date)} · ${isIn?'Đầu vào':'Đầu ra'}${i.source?` · <span class="mute">${esc(i.source)}</span>`:''}</p>
+  <div class="tiles"><div class="card tile"><div class="l">Chưa thuế</div><div class="v">${vnd(i.net)}</div></div><div class="card tile"><div class="l">Thuế</div><div class="v">${vnd(i.vat)}</div></div><div class="card tile"><div class="l">Tổng</div><div class="v">${vnd(i.total)}</div></div></div>`+
+  table([['Gán mã'],['Hàng hóa'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã · quy đổi']],invLines(i).map((x,k)=>{const c=conv(x);return{c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${d.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code)}</b> ${qf(c.qty)} ${esc(c.unit)}`:'<span class="mute">Chưa gán</span>']}}),{empty:'Hóa đơn này chưa có chi tiết hàng. Nạp file XML của hóa đơn để bổ sung.'}),
+  extra:role==='admin'?`<button class="btn bad" id="idel" style="margin-right:auto">Xóa hóa đơn</button>`:''});
+  const b=$('#idel');if(b)b.onclick=async()=>{if(await confirmBox(`Xóa hóa đơn <b>${esc(i.no)}</b> khỏi phần mềm?`,'Xóa')){await del('invoices',d.id);logAct('xóa hóa đơn '+i.no);closeModal()}};
+};
+A.invXlsx=d=>{const dir=d.id,isIn=dir==='in',[f,t]=rng();
+  const all=goodInv(dir).filter(i=>inR(i.date,[f,t])).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const tq=l=>l.map(i=>({'Ngày':i.date,'Ký hiệu':i.symbol,'Số HĐ':i.no,[isIn?'Người bán':'Người mua']:i.partyName,'MST':i.mst,'Chưa thuế':num(i.net),'Thuế':num(i.vat),'Tổng':num(i.total),'Trạng thái':i.status||''}));
+  const ct=l=>{const r=[];l.forEach(i=>invLines(i).forEach(x=>{const c=conv(x);r.push({'Ngày':i.date,'Ký hiệu':i.symbol,'Số HĐ':i.no,[isIn?'Người bán':'Người mua']:i.partyName,'MST':i.mst,'Hàng hóa':x.name,'ĐVT':x.unit,'SL':num(x.qty),'Đơn giá':num(x.price),'Thành tiền':num(x.amount)||num(x.qty)*num(x.price),'Mã hàng':c.code,'Tên mã hàng':c.cv?c.name:'','SL quy đổi':c.cv?+c.qty.toFixed(4):'','ĐVT quy đổi':c.cv?c.unit:''})}));return r};
+  const sh={'Tổng quát':tq(all),'Chi tiết cả năm':ct(all)};const by={};all.forEach(i=>{const k=(i.date||'').slice(0,7);(by[k]=by[k]||[]).push(i)});
+  Object.keys(by).sort().forEach(k=>{const mm=k.slice(5,7);sh['T'+mm+' tổng quát']=tq(by[k]);sh['T'+mm+' chi tiết']=ct(by[k])});
+  exportXlsx(`hoa-don-dau-${isIn?'vao':'ra'}-${f}-${t}.xlsx`,sh)};
+
+/* --- Nạp hóa đơn từ XML (eHoadon, BKAV) và Excel danh sách (GDT) --- */
+function parseInvoiceXml(text){
+  const doc=new DOMParser().parseFromString(text,'text/xml');if(doc.getElementsByTagName('parsererror').length)throw new Error('File XML không hợp lệ');
+  const g=(r,t)=>{const e=r.getElementsByTagName(t)[0];return e?e.textContent.trim():''};
+  const nb=doc.getElementsByTagName('NBan')[0]||doc,nm=doc.getElementsByTagName('NMua')[0]||doc,tt=doc.getElementsByTagName('TToan')[0]||doc;
+  const lines=[...doc.getElementsByTagName('HHDVu')].map(h=>({name:g(h,'THHDVu'),unit:g(h,'DVTinh'),qty:num(g(h,'SLuong')),price:num(g(h,'DGia')),amount:num(g(h,'ThTien'))})).filter(l=>l.name);
+  const r={no:g(doc,'SHDon'),symbol:(g(doc,'KHMSHDon')&&g(doc,'KHHDon')&&!g(doc,'KHHDon').startsWith(g(doc,'KHMSHDon'))?g(doc,'KHMSHDon'):'')+g(doc,'KHHDon'),date:(g(doc,'NLap')||'').slice(0,10),seller:{name:g(nb,'Ten'),mst:g(nb,'MST')},buyer:{name:g(nm,'Ten'),mst:g(nm,'MST')},lines,net:num(g(tt,'TgTCThue')),vat:num(g(tt,'TgTThue')),total:num(g(tt,'TgTTTBSo'))};
+  if(!r.no)throw new Error('Không thấy số hóa đơn trong XML');r.symbol=r.symbol.replace(/^\d(?=[A-Z])/,'');return r;
+}
+function parseInvSheet(aoa,dir){
+  let hi=-1;for(let i=0;i<Math.min(aoa.length,25);i++){const r=(aoa[i]||[]).map(norm);if(r.filter(c=>/ky hieu|so hoa don|ngay lap|ngay hoa don|mst|ma so thue|tong tien|trang thai/.test(c)).length>=3){hi=i;break}}
+  if(hi<0)throw new Error('Không thấy dòng tiêu đề (Ký hiệu, Số hóa đơn, Ngày lập…)');
+  const h=aoa[hi].map(norm),f=(re,pref)=>{const ix=h.map((c,i)=>re.test(c)?i:-1).filter(i=>i>=0);if(pref){const p=ix.find(i=>pref.test(h[i]));if(p!==undefined)return p}return ix.length?ix[0]:-1};
+  const side=dir==='in'?/ban/:/mua/;
+  const ci={sym:f(/ky hieu(?! mau)/),no:f(/^so hoa don|^so hd|so hoa don/),date:f(/ngay (lap|hoa don|ky)/),mst:f(/mst|ma so thue/,side),name:f(/^ten |ten nguoi|ten don vi|ten khach/,side),net:f(/chua thue|tien hang/),vat:f(/tien thue|thue gtgt/),total:f(/thanh toan|tong cong|tong tien(?!.*(chua|thue))/),status:f(/trang thai/)};
+  if(ci.no<0||ci.date<0)throw new Error('Thiếu cột Số hóa đơn hoặc Ngày');
+  const out=[];for(let i=hi+1;i<aoa.length;i++){const r=aoa[i]||[];const no=String(r[ci.no]||'').trim(),date=parseDate(r[ci.date]);if(!no||!date||!/\d/.test(no))continue;
+    const net=ci.net>=0?moneyNum(r[ci.net]):0,vat=ci.vat>=0?moneyNum(r[ci.vat]):0,total=ci.total>=0?moneyNum(r[ci.total]):net+vat;
+    out.push({no:no.replace(/^0+(?=\d)/,''),symbol:ci.sym>=0?String(r[ci.sym]).trim():'',date,mst:ci.mst>=0?String(r[ci.mst]).trim():'',partyName:ci.name>=0?String(r[ci.name]).trim():'',net,vat:vat||total-net,total,status:ci.status>=0?String(r[ci.status]).trim():''})}
+  return out;
+}
+A.invImport=d=>{const dir0=d.id;let items=[];
+  const draw=()=>{const ok=items.filter(x=>x.inv&&!x.skip);$('#imp').innerHTML=items.length?`<p><b>${ok.length}</b> hóa đơn mới · ${items.filter(x=>x.skip).length} bỏ qua (đã có, hủy hoặc bị thay thế) · ${items.filter(x=>x.err).length} lỗi</p>`+table([['Tệp / dòng'],['Chiều'],['Số HĐ'],['Ngày'],['Đối tác'],['Tổng','r'],['Kết quả']],items.slice(0,300).map(x=>({c:[esc(x.file),x.inv?(x.inv.dir==='in'?'Vào':'Ra'):'',esc(x.inv?.no||''),dmy(x.inv?.date),esc(x.inv?.partyName||''),x.inv?vnd(x.inv.total):'',x.err?pill(x.err,'bad'):x.skip?pill(x.skip,'warn'):x.addLines?pill('Bổ sung chi tiết hàng','acc'):pill('Mới','good')]}))):'';$('#okbtn').disabled=!ok.length};
+  modal({title:'Nạp hóa đơn '+(dir0==='in'?'đầu vào':'đầu ra'),wide:true,body:`<p class="mute" style="margin-top:0">Chọn nhiều file cùng lúc. <b>File XML</b> tải từ eHoadon, BKAV hoặc cổng thuế có đủ chi tiết hàng. <b>File Excel</b> danh sách hóa đơn tải từ cổng thuế GDT chỉ có tổng tiền. Hóa đơn trùng khóa <code>chiều|ký hiệu|số|MST</code> và hóa đơn hủy, bị thay thế sẽ tự bỏ qua.</p><input type="file" id="impf" multiple accept=".xml,.xlsx,.xls,.csv,text/xml"><div id="imp" style="margin-top:10px"></div>`,ok:'Lưu hóa đơn mới',
+   async onOk(){const ok=items.filter(x=>x.inv&&!x.skip);let n=0,u=0;
+     await pool(ok,async x=>{if(x.addLines){await patch('invoices',x.addLines,{lines:x.inv.lines});u++}else{await put('invoices',ivId(x.inv.key),x.inv);n++}},4,(a,b)=>setProg(`Đang lưu hóa đơn ${a}/${b}…`));
+     setProg('');await markSync(dir0==='in'?'inv_in_manual':'inv_out_manual','Nạp tay hóa đơn '+(dir0==='in'?'đầu vào':'đầu ra'),n);logAct(`nạp ${n} hóa đơn mới, bổ sung chi tiết ${u} hóa đơn`);toast(`Đã lưu ${n} hóa đơn mới${u?', bổ sung chi tiết '+u:''}`)}});
+  $('#okbtn').disabled=true;
+  $('#impf').onchange=async e=>{items=[];const seen=new Set();
+    for(const f of e.target.files){
+      try{if(/\.xml$/i.test(f.name)){const r=parseInvoiceXml(await f.text()),ours=OURMST();const dir=digits(r.seller.mst)===ours?'out':'in',party=dir==='in'?r.seller:r.buyer;
+          const inv={dir,no:r.no,symbol:r.symbol,date:r.date,partyName:party.name||'',mst:party.mst||'',net:r.net||sum(r.lines,l=>l.amount),vat:r.vat,total:r.total||r.net+r.vat,lines:r.lines,status:'ok',source:'XML '+f.name,by:me,createdAt:new Date().toISOString()};inv.vatRate=inv.net?Math.round(inv.vat/inv.net*100):0;inv.key=invKey(inv);
+          const ex=S.invoices[ivId(inv.key)]||arr(S.invoices).find(x=>x.key===inv.key);const it={file:f.name,inv};
+          if(dir!==dir0)it.skip='Là HĐ '+(dir==='in'?'đầu vào':'đầu ra');else if(ex&&!invLines(ex).length&&inv.lines.length)it.addLines=ex.id||ivId(inv.key);else if(ex||seen.has(inv.key))it.skip='Đã có';seen.add(inv.key);items.push(it)}
+        else{const rows=parseInvSheet(await readAoa(f),dir0);rows.forEach((r,k)=>{const inv={dir:dir0,...r,source:'Excel '+f.name,by:me,createdAt:new Date().toISOString()};inv.vatRate=inv.net?Math.round(inv.vat/inv.net*100):0;inv.key=invKey(inv);
+          const it={file:f.name+' #'+(k+1),inv};if(BADINV(inv))it.skip='Hủy / bị thay thế';else if(S.invoices[ivId(inv.key)]||seen.has(inv.key)||arr(S.invoices).some(x=>x.key===inv.key))it.skip='Đã có';seen.add(inv.key);items.push(it)})}}
+      catch(err){items.push({file:f.name,err:err.message||'Lỗi đọc file'})}}
+    draw()};
+};
+async function markSync(key,name,count,note){try{await db.doc('sync/status').set({sources:{...((S.sync&&S.sync.sources)||{}),[key]:{name,at:new Date().toISOString(),count,note:note||''}}})}catch(e){}}
+
+/* ================= QUY ĐỔI (kiểu KiotViet) ================= */
+A.cvOpen=d=>{
+  const i=S.invoices[d.id],l=i&&invLines(i)[+d.ln];if(!l)return;
+  if(!canWrite())return toast('Chỉ quản trị và kế toán được gán mã hàng','bad');
+  const ex=cvOf(l.name,l.unit)||{},sug=simItems(l.name);
+  modal({title:'Quy đổi hàng hóa',wide:true,body:`<p class="mute" style="margin-top:0">Tên trên hóa đơn: <b>${esc(l.name)}</b> · ĐVT gốc: <b>${esc(l.unit||'(trống)')}</b> · SL ${qf(l.qty)}</p>
+   <datalist id="uns">${UNIT_SUG.map(u=>`<option value="${u}">`).join('')}</datalist>
+   <div class="fg">${F('cv_item','1. Chọn mã hàng',ex.itemId||(sug[0]&&sug[0].s>=.6?sug[0].it.id:''),{type:'select',cls:'full',opts:[['','— Chưa gán mã —'],['__new','+ Tạo mã hàng mới ('+nextCode('items','MH',4)+')'],...arr(S.items).sort((a,b)=>String(a.code).localeCompare(String(b.code))).map(it=>[it.id,`${it.code} · ${it.name} (${it.unit||''})`])]})}
+   ${sug.length?`<div style="grid-column:1/-1">Gợi ý theo độ giống tên: ${sug.map(x=>`<button class="btn sm" data-act="cvPick" data-id="${x.it.id}">${esc(x.it.code)} · ${esc(x.it.name)} <span class="mute">${Math.round(x.s*100)}%</span></button>`).join(' ')}</div>`:''}
+   ${F('cv_iname','Tên chuẩn của mã mới',l.name,{cls:'full'})}
+   ${F('cv_to','2. Đơn vị đích',ex.to||'',{attr:'list="uns" placeholder="VD: m, kg, cuộn"'})}${F('cv_f',`3. Hệ số: 1 ${esc(l.unit||'đơn vị gốc')} = ? đơn vị đích`,ex.factor||1,{type:'number',attr:'step="any" min="0"'})}
+   ${F('cv_pre','Mẫu ống đồng (tự tính hệ số kg ↔ cuộn 15 m ↔ m)','',{type:'select',cls:'full',opts:[['','— Không dùng mẫu —'],...ODL.map((o,k)=>[String(k),o.lbl])]})}</div>
+   <div id="cv_hint" class="note" style="margin-top:10px;display:none"></div>
+   <p class="mute" style="font-size:12.5px">Áp dụng cho mọi dòng cùng tên, cùng đơn vị ở cả hóa đơn đầu vào và đầu ra. Xuất nhập tồn tính theo mã và đơn vị đích.</p>`,ok:'Lưu quy đổi',
+   extra:ex.itemId||ex.to?`<button class="btn bad" id="cvdel" style="margin-right:auto">Bỏ gán</button>`:'',
+   async onOk(){let itemId=V('cv_item');const to=V('cv_to'),f=num(V('cv_f'))||1;
+     if(!itemId)return toast('Chọn mã hàng hoặc tạo mã mới','bad'),false;
+     if(itemId==='__new'){itemId=uid();const it={code:nextCode('items','MH',4),name:V('cv_iname')||l.name,unit:to||l.unit||'',at:new Date().toISOString()};await put('items',itemId,it);S.items[itemId]=it}
+     await put('convs',cvId(l.name,l.unit),{name:l.name,from:l.unit||'',to:to||(S.items[itemId]||{}).unit||l.unit||'',factor:f,itemId,by:me,at:new Date().toISOString()});
+     logAct('quy đổi '+l.name+' → '+((S.items[itemId]||{}).code||''));ver++;toast('Đã lưu quy đổi');setTimeout(render,50)}});
+  const L=$('#layer'),hint=$('#cv_hint',L);
+  const showHint=()=>{const f=num(V('cv_f'))||1,to=V('cv_to')||l.unit;hint.style.display='';hint.textContent=`${qf(l.qty)} ${l.unit||''} × ${qf(f)} = ${qf(num(l.qty)*f)} ${to}`};
+  L.oninput=e=>{if(e.target.id==='cv_f'||e.target.id==='cv_to')showHint()};
+  L.onchange=e=>{if(e.target.id==='cv_item'){const it=S.items[e.target.value];if(it&&!V('cv_to'))$('#cv_to',L).value=it.unit||'';showHint()}
+    if(e.target.id!=='cv_pre')return;const o=ODL[+e.target.value];if(!o)return;const from=norm(l.unit);let to=norm(V('cv_to'));
+    if(!to){to=/kg|ky/.test(from)?'m':'kg';$('#cv_to',L).value=to}
+    const isM=x=>/^m$|^met|^mét/.test(x),isKg=x=>/kg|ky/.test(x),isC=x=>/cuon/.test(x);let f=0;
+    if(isKg(from)&&isM(to))f=15/o.kg;else if(isC(from)&&isM(to))f=15;else if(isC(from)&&isKg(to))f=o.kg;else if(isM(from)&&isKg(to))f=o.kg/15;else if(isKg(from)&&isC(to))f=1/o.kg;else if(isM(from)&&isC(to))f=1/15;
+    if(f){$('#cv_f',L).value=+f.toFixed(5);showHint()}else{hint.style.display='';hint.textContent='Mẫu ống đồng cần đơn vị gốc và đích là m, kg hoặc cuộn.'}};
+  modalClose=()=>{L.oninput=L.onchange=null};showHint();
+  const b=$('#cvdel');if(b)b.onclick=async()=>{await del('convs',cvId(l.name,l.unit));ver++;closeModal();toast('Đã bỏ gán');render()};
+};
+A.cvPick=d=>{const L=$('#layer'),s=$('#cv_item',L);if(!s)return;s.value=d.id;const it=S.items[d.id];if(it&&!$('#cv_to',L).value)$('#cv_to',L).value=it.unit||''};
+
+/* ================= MÃ HÀNG ================= */
+function unmapped(){const m={};goodInv().forEach(i=>invLines(i).forEach((x,k)=>{if(cvOf(x.name,x.unit))return;const key=norm(x.name)+'|'+norm(x.unit),r=m[key]=m[key]||{key,name:x.name,unit:x.unit||'',n:0,qty:0,id:i.id,ln:k,dirs:new Set()};r.n++;r.qty+=num(x.qty);r.dirs.add(i.dir)}));return Object.values(m).sort((a,b)=>b.n-a.n)}
+function mergeSuggest(un){ // gom các tên chưa gán có độ giống cao
+  const toks=un.map(u=>tokOf(u.name)),used=new Set(),out=[];
+  for(let i=0;i<un.length&&out.length<40;i++){if(used.has(i))continue;const g=[i];
+    for(let j=i+1;j<un.length;j++){if(used.has(j))continue;if(simScore(toks[i],toks[j])>=.5)g.push(j)}
+    if(g.length>1){g.forEach(x=>used.add(x));out.push(g.map(x=>un[x]))}}
+  return out;
+}
+VIEWS.mahang={title:'Mã hàng',bar:()=>`<div class="tabs">${[['ds','Danh sách mã'],['goi','Gợi ý gộp'],['chua','Chưa gán mã']].map(([k,t])=>`<button class="${(st.mht||'ds')===k?'on':''}" data-act="mhTab" data-id="${k}">${t}</button>`).join('')}</div><input type="search" placeholder="Tìm mã, tên hàng" data-bind="mhq" value="${esc(st.mhq||'')}">${canWrite()?'<button class="btn pri" data-act="mhEdit" data-id="">+ Mã hàng mới</button>':''}<button class="btn" data-act="mhXlsx">Xuất Excel</button>`,
+ body(){const q=norm(st.mhq||''),t=st.mht||'ds',un=unmapped();
+  const intro=`<div class="note">${pill('Cách dùng','acc')}<span>Mỗi nhà cung cấp đặt tên một mặt hàng khác nhau (VD "Dây cáp CV 2.5", "Cáp điện Cadivi CV-2.5mm²"). <b>Mã hàng</b> (MH0001…) gộp các tên đó làm một, kèm đơn vị và hệ số quy đổi, để Xuất nhập tồn tính đúng. Còn <b>${un.length}</b> tên hàng chưa gán mã.</span></div>`;
+  if(t==='chua'){const l=un.filter(r=>!q||norm(r.name).includes(q));
+    return intro+table([['Gán mã'],['Tên hàng trên hóa đơn','w'],['ĐVT'],['Có ở'],['Số dòng','r'],['Tổng SL','r'],['Gợi ý mã']],l.map(r=>{const s=simItems(r.name)[0];return{c:[`<button class="btn sm gold" data-act="cvOpen" data-id="${r.id}" data-ln="${r.ln}">Quy đổi</button>`,esc(r.name),esc(r.unit),[...r.dirs].map(x=>x==='in'?'Vào':'Ra').join(', '),r.n,qf(r.qty),s?`${esc(s.it.code)} · ${esc(s.it.name)} <span class="mute">${Math.round(s.s*100)}%</span>`:'']}}),{empty:'Mọi tên hàng đã được gán mã.'})}
+  if(t==='goi'){const gs=mergeSuggest(un).filter(g=>!q||g.some(x=>norm(x.name).includes(q)));
+    return intro+(gs.length?gs.map((g,k)=>`<div class="card grpcard"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><b>Nhóm ${k+1}: ${g.length} tên giống nhau</b>${canWrite()?`<button class="btn sm gold" data-act="mhMerge" data-id="${esc(g.map(x=>x.key).join('§'))}">Gộp thành 1 mã</button>`:''}</div>${g.map(x=>`<div class="row" style="padding:5px 0"><span style="flex:1">${esc(x.name)}</span><span class="mute nw">${esc(x.unit)} · ${x.n} dòng</span></div>`).join('')}</div>`).join(''):'<div class="card empty">Không còn nhóm tên nào đủ giống để gợi ý gộp.</div>')}
+  const cnt={};arr(S.convs).forEach(c=>{if(c.itemId)(cnt[c.itemId]=cnt[c.itemId]||[]).push(c)});
+  const its=arr(S.items).filter(it=>!q||norm(it.code+' '+it.name+' '+(cnt[it.id]||[]).map(c=>c.name).join(' ')).includes(q)).sort((a,b)=>String(a.code).localeCompare(String(b.code)));
+  return intro+table([['Mã'],['Tên chuẩn'],['ĐVT'],['Các tên đã gộp'],['']],its.map(it=>({c:[`<b>${esc(it.code)}</b>`,esc(it.name),esc(it.unit||''),(cnt[it.id]||[]).map(c=>`${esc(c.name)} <span class="mute">(${esc(c.from||'—')}${num(c.factor)!==1?' ×'+qf(c.factor):''})</span>`).join('<br>')||'<span class="mute">—</span>',canWrite()?`<button class="btn sm" data-act="mhEdit" data-id="${it.id}">Sửa</button>`:'']})),{empty:'Chưa có mã hàng. Vào tab "Gợi ý gộp" hoặc "Chưa gán mã" để tạo mã đầu tiên.'});
+ }};
+A.mhTab=d=>{st.mht=d.id;render()};
+A.mhEdit=d=>{const it=d.id?S.items[d.id]:{};
+  modal({title:d.id?'Sửa mã hàng':'Mã hàng mới',body:`<div class="fg">${F('mh_code','Mã',it.code||nextCode('items','MH',4))}${F('mh_unit','ĐVT chuẩn',it.unit||'',{attr:'list="uns2"'})}${F('mh_name','Tên chuẩn',it.name||'',{cls:'full'})}</div><datalist id="uns2">${UNIT_SUG.map(u=>`<option value="${u}">`).join('')}</datalist>`,
+   extra:d.id&&role==='admin'?`<button class="btn bad" id="mhdel" style="margin-right:auto">Xóa mã</button>`:'',
+   async onOk(){if(!V('mh_name'))return toast('Nhập tên chuẩn','bad'),false;const code=V('mh_code');if(arr(S.items).some(x=>x.id!==d.id&&norm(x.code)===norm(code)))return toast('Mã đã tồn tại','bad'),false;
+     await put('items',d.id||uid(),{...it,code,name:V('mh_name'),unit:V('mh_unit'),at:it.at||new Date().toISOString()});logAct((d.id?'sửa':'tạo')+' mã hàng '+code);ver++;render()}});
+  const b=$('#mhdel');if(b)b.onclick=async()=>{if(await confirmBox('Xóa mã hàng này? Các tên đã gộp sẽ trở về "chưa gán mã".','Xóa')){for(const c of arr(S.convs))if(c.itemId===d.id)await del('convs',c.id);await del('items',d.id);ver++;closeModal();render()}};
+};
+A.mhMerge=d=>{const keys=String(d.id).split('§'),un=unmapped().filter(u=>keys.includes(u.key));if(!un.length)return;
+  const base=un.slice().sort((a,b)=>b.n-a.n)[0],units=[...new Set(un.map(u=>u.unit))];
+  modal({title:'Gộp thành 1 mã hàng',wide:true,body:`<datalist id="uns3">${UNIT_SUG.map(u=>`<option value="${u}">`).join('')}</datalist><div class="fg">${F('mg_code','Mã',nextCode('items','MH',4))}${F('mg_unit','ĐVT chuẩn',base.unit,{attr:'list="uns3"'})}${F('mg_name','Tên chuẩn',base.name,{cls:'full'})}</div>
+   <p class="mute">${units.length>1?'Các tên có đơn vị khác nhau, chị nhập hệ số để đổi về ĐVT chuẩn. ':''}Bỏ chọn tên nào không phải cùng mặt hàng.</p>`+
+   table([['Gộp'],['Tên trên hóa đơn'],['ĐVT gốc'],['Hệ số về ĐVT chuẩn']],un.map((u,k)=>({c:[`<input type="checkbox" data-mg="${k}" checked style="width:auto">`,esc(u.name),esc(u.unit),`<input type="number" step="any" data-mf="${k}" value="1" style="width:110px">`]}))),ok:'Gộp',
+   async onOk(){const id=uid(),unit=V('mg_unit');await put('items',id,{code:V('mg_code'),name:V('mg_name'),unit,at:new Date().toISOString()});let n=0;
+     for(const [k,u] of un.entries()){if(!$(`[data-mg="${k}"]`,$('#layer')).checked)continue;await put('convs',cvId(u.name,u.unit),{name:u.name,from:u.unit,to:unit,factor:num($(`[data-mf="${k}"]`,$('#layer')).value)||1,itemId:id,by:me,at:new Date().toISOString()});n++}
+     logAct('gộp '+n+' tên hàng thành mã '+V('mg_code'));ver++;toast('Đã gộp '+n+' tên vào '+V('mg_code'));setTimeout(render,50)}});
+};
+A.mhXlsx=()=>{const rows=[];arr(S.items).sort((a,b)=>String(a.code).localeCompare(String(b.code))).forEach(it=>{const cs=arr(S.convs).filter(c=>c.itemId===it.id);if(!cs.length)rows.push({'Mã':it.code,'Tên chuẩn':it.name,'ĐVT chuẩn':it.unit,'Tên trên hóa đơn':'','ĐVT gốc':'','Hệ số':''});cs.forEach(c=>rows.push({'Mã':it.code,'Tên chuẩn':it.name,'ĐVT chuẩn':it.unit,'Tên trên hóa đơn':c.name,'ĐVT gốc':c.from,'Hệ số':num(c.factor)||1}))});
+  exportXlsx('ma-hang-'+today()+'.xlsx',{'Mã hàng':rows,'Chưa gán mã':unmapped().map(u=>({'Tên hàng':u.name,'ĐVT':u.unit,'Số dòng':u.n,'Tổng SL':u.qty}))})};
+
+/* ================= XUẤT NHẬP TỒN ================= */
+function xnt(from,to){const m={};
+  goodInv().filter(i=>i.date&&i.date<=to).forEach(i=>invLines(i).forEach(x=>{const c=conv(x),k=(c.code?'#'+c.code:'@'+norm(c.name))+'|'+norm(c.unit);
+    const r=m[k]=m[k]||{code:c.code,name:c.name,unit:c.unit,open:0,inQ:0,outQ:0,inV:0,outV:0};const s=i.dir==='in'?1:-1;
+    if(i.date<from)r.open+=s*c.qty;else if(i.dir==='in'){r.inQ+=c.qty;r.inV+=c.amount}else{r.outQ+=c.qty;r.outV+=c.amount}}));
+  return Object.values(m).map(r=>({...r,close:r.open+r.inQ-r.outQ})).sort((a,b)=>(a.code?0:1)-(b.code?0:1)||String(a.code).localeCompare(String(b.code))||a.name.localeCompare(b.name,'vi'))}
+VIEWS.xnt={title:'Xuất nhập tồn',bar:()=>`${dateBar()}<input type="search" placeholder="Tìm mã, tên hàng" data-bind="xnq" value="${esc(st.xnq||'')}"><label class="chk"><input type="checkbox" data-bind="xnMap" ${st.xnMap?'checked':''}> Chỉ hàng đã có mã</label><button class="btn pri" data-act="xntXlsx">Xuất Excel</button>`,
+ body(){const [f,t]=rng(),q=norm(st.xnq||'');const l=xnt(f,t).filter(r=>(Math.abs(r.open)>1e-9||r.inQ||r.outQ)&&(!st.xnMap||r.code)&&(!q||norm(r.code+' '+r.name).includes(q)));
+  const neg=l.filter(r=>r.close<-1e-6).length;
+  return `<div class="note">${pill('Nguồn','acc')}<span>Nhập = chi tiết hàng trên <b>hóa đơn đầu vào</b>, Xuất = chi tiết hàng trên <b>hóa đơn đầu ra</b> (đã bỏ HĐ hủy, bị thay thế). Hàng đã gán mã được gộp theo mã và đơn vị đích. ${neg?`<b>${neg}</b> dòng tồn âm: thường do bán ra một tên chưa gán cùng mã với tên mua vào, hoặc khác đơn vị.`:''}</span></div>
+  <div class="tiles"><div class="card tile"><div class="l">Mặt hàng</div><div class="v">${l.length}</div><div class="s">${l.filter(r=>r.code).length} đã có mã</div></div><div class="card tile"><div class="l">Giá trị nhập</div><div class="v">${vnd(sum(l,r=>r.inV))} đ</div></div><div class="card tile"><div class="l">Giá trị xuất (bán)</div><div class="v">${vnd(sum(l,r=>r.outV))} đ</div></div></div>`+
+  table([['Mã'],['Hàng hóa','w'],['ĐVT'],['Tồn đầu','r'],['Nhập','r'],['Xuất','r'],['Tồn cuối','r'],['Giá trị nhập','r'],['Giá trị xuất','r']],l.map(r=>({cls:r.close<-1e-6?'hl':'',c:[r.code?`<b>${esc(r.code)}</b>`:'<span class="mute">—</span>',esc(r.name),esc(r.unit),qf(r.open),qf(r.inQ),qf(r.outQ),`<b class="${r.close<-1e-6?'neg':''}">${qf(r.close)}</b>`,vnd(r.inV),vnd(r.outV)]})),{empty:'Chưa có dòng hàng trên hóa đơn trong kỳ này.'})}};
+A.xntXlsx=()=>{const [f,t]=rng();exportXlsx(`xuat-nhap-ton-${f}-${t}.xlsx`,{'Xuất nhập tồn':xnt(f,t).filter(r=>r.open||r.inQ||r.outQ).map(r=>({'Mã':r.code,'Hàng hóa':r.name,'ĐVT':r.unit,'Tồn đầu':+r.open.toFixed(4),'Nhập':+r.inQ.toFixed(4),'Xuất':+r.outQ.toFixed(4),'Tồn cuối':+r.close.toFixed(4),'Giá trị nhập':Math.round(r.inV),'Giá trị xuất':Math.round(r.outV)}))})};
+
+/* ================= NGÂN HÀNG ================= */
+function txList(type){const q=norm(st.bq||''),r=rng(),m=M();
+  return arr(S.bankTx).filter(t=>accType(t.accountId)===type&&(!st.ba||t.accountId===st.ba)&&inR(t.date,r)&&(!st.bd||(st.bd==='in'?t.amount>0:t.amount<0))&&(!q||norm(t.desc+' '+partyName(m.partyOf[t.id])+' '+accName(t.accountId)).includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date))||num(b.seq)-num(a.seq))}
+const bankBar=type=>{if(st.ba&&accType(st.ba)!==type)st.ba='';return `<select data-bind="ba" aria-label="Tài khoản"><option value="">Mọi tài khoản ${type==='cty'?'công ty':'cá nhân'}</option>${accList(type).map(a=>`<option value="${a.id}"${st.ba===a.id?' selected':''}>${esc(accName(a.id))}</option>`).join('')}</select>${dateBar()}<select data-bind="bd" aria-label="Chiều"><option value="">Vào và ra</option><option value="in"${st.bd==='in'?' selected':''}>Chỉ tiền vào</option><option value="out"${st.bd==='out'?' selected':''}>Chỉ tiền ra</option></select><input type="search" placeholder="Tìm nội dung, đối tác" data-bind="bq" value="${esc(st.bq||'')}">${canWrite()?`<button class="btn" data-act="bkImport" data-id="${type}">Nhập sao kê</button>`:''}<button class="btn pri" data-act="bkXlsx" data-id="${type}">${st.ba?'Xuất Excel tài khoản này':'Xuất Excel nhóm '+(type==='cty'?'công ty':'cá nhân')}</button>`};
+function bankBody(type){const l=txList(type),live=l.filter(t=>!isDup(t)),m=M();
+  return `<div class="tiles">${accList(type).map(a=>{const n=arr(S.bankTx).filter(t=>t.accountId===a.id).length;return `<div class="card tile click" data-act="accPick" data-id="${a.id}" style="${st.ba===a.id?'border-color:var(--gold)':''}"><div class="l">${esc(accName(a.id))}</div><div class="v">${vnd(balOf(a.id))}</div><div class="s">${n} giao dịch</div></div>`}).join('')}</div>
+  <div class="tiles"><div class="card tile"><div class="l">Tiền vào (đang lọc)</div><div class="v pos">${vnd(sum(live.filter(t=>t.amount>0),t=>t.amount))} đ</div></div><div class="card tile"><div class="l">Tiền ra (đang lọc)</div><div class="v neg">${vnd(sum(live.filter(t=>t.amount<0),t=>-t.amount))} đ</div><div class="s">${l.length-live.length?(l.length-live.length)+' GD trùng đã loại':''}</div></div></div>`+
+  table([['Ngày'],['Tài khoản'],['Số tiền','r'],['Nội dung','w2'],['Số dư','r'],['Đối tác','w']],l.map(t=>({act:'txView',id:t.id,cls:isDup(t)?'dim':'',c:[`<span class="nw">${dmy(t.date)}</span>`,`<span class="nw">${esc(accName(t.accountId))}</span>`,`<b class="${t.amount<0?'neg':'pos'}">${t.amount>0?'+':''}${vnd(t.amount)}</b>`,esc(t.desc||'')+(isDup(t)?' '+pill('Trùng','bad'):''),t.balance===''||t.balance==null?'':vnd(t.balance),esc(partyName(m.partyOf[t.id]))]})),{empty:'Chưa có giao dịch trong kỳ này.'})}
+VIEWS.bankcty={title:'Ngân hàng công ty',bar:()=>bankBar('cty'),body:()=>bankBody('cty')};
+VIEWS.bankcn={title:'Ngân hàng cá nhân',bar:()=>bankBar('canhan'),body:()=>bankBody('canhan')};
+A.accPick=d=>{st.ba=st.ba===d.id?'':d.id;render()};
+A.txView=d=>{const t=S.bankTx[d.id];if(!t)return;const m=M(),cur=m.partyOf[d.id]||'',out=t.amount<0;
+  const opts=Object.values(m.parties).filter(p=>out?p.nIn:p.nOut).sort((a,b)=>String(a.name).localeCompare(String(b.name),'vi'));
+  modal({title:`${out?'Chi':'Thu'} ${vnd(Math.abs(t.amount))} đ · ${dmy(t.date)}`,body:`<p style="margin-top:0">${esc(t.desc||'')}</p><p class="mute">${esc(accName(t.accountId))}${t.balance!==''&&t.balance!=null?' · số dư '+vnd(t.balance)+' đ':''}${isDup(t)?' · '+pill('Đã xác nhận trùng','bad'):''}</p>
+   ${canWrite()?`<datalist id="plist">${opts.map(p=>`<option value="${esc((p.name||'')+' — '+(p.mst||p.key))}">`).join('')}</datalist><div class="fg">${F('tx_par',out?'Nhà cung cấp':'Khách hàng',cur?(partyName(cur)+' — '+((m.parties[cur]||{}).mst||cur)):'',{cls:'full',attr:'list="plist" autocomplete="off" placeholder="Gõ tên hoặc MST; để trống nếu không thuộc đối tác nào"'})}${F('tx_note','Ghi chú',t.note||'',{cls:'full'})}</div><p class="mute" style="font-size:12.5px">${t.party?'Đã gán tay.':cur?'Phần mềm tự khớp theo nội dung chuyển khoản.':'Chưa khớp đối tác.'}</p>`:`<p>Đối tác: <b>${esc(partyName(cur)||'—')}</b></p>`}`,
+   ok:'Lưu',onOk:canWrite()?async()=>{const v=V('tx_par');let key='-';if(v){const tail=v.split(' — ').pop();const p=Object.values(m.parties).find(x=>x.mst===tail||x.key===tail||norm(x.name)===norm(v));if(!p)return toast('Chọn đối tác trong danh sách gợi ý','bad'),false;key=p.key}
+     await patch('bankTx',d.id,{party:key,note:V('tx_note')});logAct('gán đối tác cho giao dịch '+vnd(t.amount));ver++;toast('Đã lưu')}:null,
+   extra:canWrite()&&t.party?`<button class="btn" id="txauto" style="margin-right:auto">Trả về tự khớp</button>`:''});
+  const b=$('#txauto');if(b)b.onclick=async()=>{await patch('bankTx',d.id,{party:''});ver++;closeModal()};
+};
+/* --- Nhập sao kê: bỏ qua giao dịch trùng (cùng tài khoản, ngày, số tiền) --- */
+function parseStatement(aoa){
+  let hi=-1;for(let i=0;i<Math.min(aoa.length,60);i++){const r=(aoa[i]||[]).map(norm);if(r.filter(c=>/ngay|date|noi dung|dien giai|mo ta|ghi no|ghi co|so tien|debit|credit|so du|rut ra|gui vao|phat sinh|tien ra|tien vao/.test(c)).length>=3){hi=i;break}}
+  if(hi<0)throw new Error('Không thấy dòng tiêu đề (Ngày, Nội dung, Số tiền…) trong file');
+  const h=aoa[hi].map(norm),f=re=>h.findIndex(c=>re.test(c));
+  const ci={date:f(/ngay|date/),debit:f(/ghi no|debit|rut ra|tien ra|chi ra|phat sinh no|so tien no/),credit:f(/ghi co|credit|gui vao|tien vao|thu vao|phat sinh co|so tien co/),amt:f(/^so tien|amount|^gia tri/),desc:f(/noi dung|dien giai|mo ta|chi tiet|description|ghi chu/),bal:f(/so du|balance/)};
+  if(ci.date<0||ci.desc<0||(ci.debit<0&&ci.credit<0&&ci.amt<0))throw new Error('Thiếu cột Ngày, Nội dung hoặc Số tiền');
+  const out=[];for(let i=hi+1;i<aoa.length;i++){const r=aoa[i]||[],date=parseDate(r[ci.date]);if(!date)continue;
+    let a=0;if(ci.debit>=0||ci.credit>=0)a=(ci.credit>=0?Math.abs(moneyNum(r[ci.credit])):0)-(ci.debit>=0?Math.abs(moneyNum(r[ci.debit])):0);else a=moneyNum(r[ci.amt]);
+    if(!a)continue;out.push({date,amount:a,desc:String(r[ci.desc]||'').replace(/\s+/g,' ').trim(),balance:ci.bal>=0&&r[ci.bal]!==''?moneyNum(r[ci.bal]):'',seq:out.length})}
+  return out;
+}
+function dedupeRows(accId,rows){const have={};arr(S.bankTx).forEach(t=>{if(t.accountId===accId){const k=t.date+'|'+Math.round(num(t.amount));have[k]=(have[k]||0)+1}});
+  const fresh=[];let skip=0;rows.forEach(r=>{const k=r.date+'|'+Math.round(num(r.amount));if(have[k]>0){have[k]--;skip++}else fresh.push(r)});return{fresh,skip}}
+async function writeTx(accId,rows,seq0){const docs=rows.map((r,i)=>{const k=txKey(accId,r.date,r.amount,r.desc,r.balance);let id=txId(k),n=1;while(S.bankTx[id])id=txId(k)+'_'+(n++);
+  const d={accountId:accId,date:r.date,amount:num(r.amount),desc:String(r.desc||''),balance:r.balance===''||r.balance==null?'':num(r.balance),seq:(seq0||0)+(r.seq??i),key:k,at:new Date().toISOString()};S.bankTx[id]=d;return[id,d]});
+  await pool(docs,([id,d])=>put('bankTx',id,d),4,(a,b)=>setProg(`Đang lưu giao dịch ${accName(accId)}: ${a}/${b}…`));setProg('');ver++;return docs.length}
+A.bkImport=d=>{const accs=accList(d.id);let rows=[];
+  modal({title:'Nhập sao kê ngân hàng',wide:true,body:`<div class="fg">${F('bi_acc','Tài khoản',st.ba||accs[0]?.id,{type:'select',opts:accs.map(a=>[a.id,accName(a.id)])})}<label class="f"><span>File sao kê (Excel hoặc CSV tải từ ngân hàng)</span><input type="file" id="bi_f" accept=".xlsx,.xls,.csv"></label></div><div id="bi_prev" style="margin-top:10px"></div>`,ok:'Nhập giao dịch mới',
+   async onOk(){if(!rows.length)return toast('Chọn file trước','bad'),false;const acc=V('bi_acc'),{fresh,skip}=dedupeRows(acc,rows);
+     const n=await writeTx(acc,fresh,Date.now()%1e7*100);await markSync('bank_'+acc,'Sao kê '+accName(acc),n,skip?skip+' GD trùng đã bỏ qua':'');logAct(`nhập sao kê ${accName(acc)}: ${n} giao dịch mới, bỏ ${skip} trùng`);toast(`Đã nhập ${n} giao dịch mới, bỏ qua ${skip} giao dịch trùng`)}});
+  const prev=()=>{const p=$('#bi_prev');if(!rows.length)return;const {fresh,skip}=dedupeRows(V('bi_acc'),rows);
+    p.innerHTML=`<p>Đọc được <b>${rows.length}</b> giao dịch: <b>${fresh.length}</b> mới, <b>${skip}</b> trùng (cùng tài khoản, ngày, số tiền) sẽ bỏ qua.</p>`+table([['Ngày'],['Số tiền','r'],['Nội dung']],fresh.slice(0,8).map(r=>({c:[dmy(r.date),vnd(r.amount),esc(r.desc)]})))};
+  $('#bi_acc').onchange=prev;
+  $('#bi_f').onchange=async e=>{const f=e.target.files[0];if(!f)return;$('#bi_prev').innerHTML='<p class="mute">Đang đọc…</p>';try{rows=parseStatement(await readAoa(f));prev()}catch(err){rows=[];$('#bi_prev').innerHTML='<p class="neg">'+esc(err.message)+'</p>'}};
+};
+/* --- Xuất Excel ngân hàng --- */
+function bankSheets(accs,[f,t]){const m=M(),sh={},sumRows=[],all=[];
+  accs.forEach(a=>{const rows=arr(S.bankTx).filter(x=>x.accountId===a.id&&!isDup(x)&&inR(x.date,[f,t])).sort((x,y)=>String(x.date).localeCompare(String(y.date))||num(x.seq)-num(y.seq));
+    const conv1=x=>({'Ngày':x.date,'Tài khoản':accName(a.id),'Loại':a.type==='canhan'?'Cá nhân':'Công ty','Số tiền (+vào/-ra)':num(x.amount),'Vào':x.amount>0?num(x.amount):'','Ra':x.amount<0?-num(x.amount):'','Nội dung':x.desc,'Số dư':x.balance,'Đối tác':partyName(m.partyOf[x.id]),'Ghi chú':x.note||''});
+    sh[accName(a.id)]=rows.map(conv1);rows.forEach(x=>all.push(conv1(x)));
+    const mm={};rows.forEach(x=>{const k=String(x.date).slice(0,7),o=mm[k]=mm[k]||{i:0,o:0,n:0};o.n++;if(x.amount>0)o.i+=num(x.amount);else o.o-=num(x.amount)});
+    Object.keys(mm).sort().forEach(k=>sumRows.push({'Loại':a.type==='canhan'?'Cá nhân':'Công ty','Tài khoản':accName(a.id),'Tháng':k,'Số GD':mm[k].n,'Tiền vào':mm[k].i,'Tiền ra':mm[k].o,'Chênh lệch':mm[k].i-mm[k].o}));
+    sumRows.push({'Loại':a.type==='canhan'?'Cá nhân':'Công ty','Tài khoản':accName(a.id),'Tháng':'Cả kỳ','Số GD':rows.length,'Tiền vào':sum(rows.filter(x=>x.amount>0),x=>x.amount),'Tiền ra':-sum(rows.filter(x=>x.amount<0),x=>x.amount),'Chênh lệch':sum(rows,x=>x.amount),'Số dư cuối':balOf(a.id)})});
+  return {sumRows,sh,all};
+}
+A.bkXlsx=d=>{const r=rng();if(st.ba){const {sh}=bankSheets([{id:st.ba,...S.bank[st.ba]}],r);return exportXlsx(`ngan-hang-${accName(st.ba).replace(/\s+/g,'-')}-${r[0]}-${r[1]}.xlsx`,sh)}
+  const {sumRows,sh}=bankSheets(accList(d.id),r);exportXlsx(`ngan-hang-${d.id==='cty'?'cong-ty':'ca-nhan'}-${r[0]}-${r[1]}.xlsx`,{'Tổng hợp':sumRows,...sh})};
+VIEWS.banktong={title:'Tổng các ngân hàng',bar:()=>`${dateBar()}<button class="btn pri" data-act="bkXlsxAll">Xuất file tổng tất cả ngân hàng</button>`,
+ body(){const r=rng(),rows=accList().map(a=>{const t=liveTx().filter(x=>x.accountId===a.id&&inR(x.date,r));return{a,n:t.length,inn:sum(t.filter(x=>x.amount>0),x=>x.amount),out:sum(t.filter(x=>x.amount<0),x=>-x.amount),last:t.map(x=>x.date).sort().pop()||''}});
+  const g=ty=>rows.filter(x=>(x.a.type||'cty')===ty),tl=(l,x)=>`<div class="card tile"><div class="l">${l}</div><div class="v"><span class="pos">+${vnd(sum(x,y=>y.inn))}</span></div><div class="s">Ra ${vnd(sum(x,y=>y.out))} đ · chênh ${vnd(sum(x,y=>y.inn-y.out))} đ</div></div>`;
+  return `<div class="tiles">${tl('Công ty',g('cty'))}${tl('Cá nhân',g('canhan'))}${tl('Tất cả',rows)}</div>`+
+  table([['Loại'],['Tài khoản'],['Số GD','r'],['Tiền vào','r'],['Tiền ra','r'],['Chênh lệch','r'],['Số dư hiện tại','r'],['GD gần nhất']],rows.map(x=>({act:'accGo',id:x.a.id,c:[x.a.type==='canhan'?pill('Cá nhân','gold'):pill('Công ty','acc'),`<b>${esc(accName(x.a.id))}</b>`,x.n,vnd(x.inn),vnd(x.out),vnd(x.inn-x.out),vnd(balOf(x.a.id)),dmy(x.last)]})),{empty:'Chưa có tài khoản.'})+
+  `<p class="mute" style="font-size:12.5px">Giao dịch đã xác nhận trùng ở mục Cảnh báo không được tính. Nút "Xuất file tổng" tạo một file gồm bảng tổng hợp theo tháng, toàn bộ giao dịch và một trang cho từng tài khoản.</p>`}};
+A.bkXlsxAll=()=>{const r=rng(),{sumRows,sh,all}=bankSheets(accList(),r);exportXlsx(`ngan-hang-tong-${r[0]}-${r[1]}.xlsx`,{'Tổng hợp':sumRows,'Tất cả giao dịch':all.sort((a,b)=>String(a['Ngày']).localeCompare(String(b['Ngày']))),...sh})};
+
+/* ================= MÔ-ĐUN KHÁC: chờ dữ liệu thật ================= */
+const SIMPLE={
+ quotes:{title:'Báo giá',col:'quotes',fields:[['no','Số báo giá'],['date','Ngày','date'],['partner','Khách hàng'],['total','Giá trị (đ)','number'],['status','Trạng thái','select',[['','—'],['gui','Đã gửi'],['chot','Đã chốt'],['khong','Không chốt']]],['note','Ghi chú','area']]},
+ contracts:{title:'Hợp đồng',col:'contracts',fields:[['no','Số hợp đồng'],['date','Ngày ký','date'],['side','Loại','select',[['ban','Hợp đồng bán'],['mua','Hợp đồng mua']]],['partner','Đối tác'],['total','Giá trị (đ)','number'],['status','Tình trạng','select',[['dang','Đang thực hiện'],['xong','Hoàn thành'],['huy','Đã hủy']]],['note','Ghi chú','area']]},
+ partners:{title:'Khách hàng - NCC',col:'partners',fields:[['type','Loại','select',[['kh','Khách hàng'],['ncc','Nhà cung cấp']]],['name','Tên'],['mst','MST'],['phone','Điện thoại'],['address','Địa chỉ'],['note','Ghi chú','area']]},
+ staff:{title:'Nhân sự',col:'staff',fields:[['name','Họ tên'],['title','Chức vụ'],['phone','Điện thoại'],['start','Ngày vào làm','date'],['note','Ghi chú','area']]}};
+const optLabel=(f,v)=>{const o=(f[3]||[]).find(x=>x[0]===v);return o?o[1]:v||''};
+function simpleView(key,extra){const cfg=SIMPLE[key];return{title:cfg.title,
+  bar:()=>`<input type="search" placeholder="Tìm" data-bind="${key}_q" value="${esc(st[key+'_q']||'')}">${canWrite()?`<button class="btn pri" data-act="smEdit" data-k="${key}" data-id="">+ Thêm</button>`:''}<button class="btn" data-act="smXlsx" data-k="${key}">Xuất Excel</button>`,
+  body(){const q=norm(st[key+'_q']||''),l=arr(S[cfg.col]).filter(x=>!q||norm(cfg.fields.map(f=>x[f[0]]).join(' ')).includes(q)).sort((a,b)=>String(b.date||b.at||'').localeCompare(String(a.date||a.at||'')));
+   const sh=cfg.fields.filter(f=>f[2]!=='area');
+   return (extra?extra.top():'')+`<div class="note">${pill('Chờ dữ liệu thật','gold')}<span>Mô-đun này để trống, chỉ ghi dữ liệu thật do chị hoặc kế toán nhập. Không có dữ liệu mẫu.</span></div>`+
+   table(sh.map(f=>[f[1],f[2]==='number'?'r':'']),l.map(x=>({act:canWrite()?'smEdit':'',id:key+'§'+x.id,c:sh.map(f=>f[2]==='number'?vnd(x[f[0]]):f[2]==='date'?dmy(x[f[0]]):f[2]==='select'?esc(optLabel(f,x[f[0]])):esc(x[f[0]]||''))})),{empty:`Chưa có ${cfg.title.toLowerCase()} nào.`})+(extra?extra.bottom():'')}}}
+A.smEdit=d=>{let key=d.k,id=d.id;if(!key&&id&&id.includes('§'))[key,id]=id.split('§');const cfg=SIMPLE[key],x=id?S[cfg.col][id]||{}:{};
+  modal({title:(id?'Sửa ':'Thêm ')+cfg.title.toLowerCase(),body:`<div class="fg">${cfg.fields.map(f=>F('sm_'+f[0],f[1],x[f[0]]??(f[2]==='date'?today():''),{type:f[2]==='area'?'area':f[2]==='select'?'select':f[2],opts:f[3],cls:f[2]==='area'?'full':''})).join('')}</div>`,
+   extra:id&&role==='admin'?`<button class="btn bad" id="smdel" style="margin-right:auto">Xóa</button>`:'',
+   async onOk(){const o={...x};cfg.fields.forEach(f=>{o[f[0]]=f[2]==='number'?num(V('sm_'+f[0])):V('sm_'+f[0])});if(!cfg.fields.slice(0,2).some(f=>o[f[0]]))return toast('Nhập thông tin','bad'),false;
+     o.at=x.at||new Date().toISOString();o.by=x.by||me;await put(cfg.col,id||uid(),o);logAct((id?'sửa ':'thêm ')+cfg.title.toLowerCase());toast('Đã lưu')}});
+  const b=$('#smdel');if(b)b.onclick=async()=>{if(await confirmBox('Xóa mục này?','Xóa')){await del(cfg.col,id);closeModal()}};
+};
+A.smXlsx=d=>{const cfg=SIMPLE[d.k];exportXlsx(d.k+'-'+today()+'.xlsx',{[cfg.title]:arr(S[cfg.col]).map(x=>Object.fromEntries(cfg.fields.map(f=>[f[1],f[2]==='select'?optLabel(f,x[f[0]]):x[f[0]]??''])))})};
+VIEWS.quotes=simpleView('quotes');VIEWS.contracts=simpleView('contracts');
+VIEWS.partners=simpleView('partners',{top:()=>'',bottom(){const ps=Object.values(M().parties).sort((a,b)=>(b.out+b.in)-(a.out+a.in));
+  return `<h3 style="margin:18px 0 6px">Đối tác xuất hiện trên hóa đơn (${ps.length})</h3><p class="mute" style="margin:0 0 8px;font-size:12.5px">Lấy thẳng từ hóa đơn đầu vào, đầu ra. Bấm một dòng để xem hóa đơn và giao dịch ngân hàng.</p>`+
+  table([['Tên','w'],['MST'],['HĐ ra','r'],['Bán cho họ','r'],['HĐ vào','r'],['Mua của họ','r']],ps.map(p=>({act:'partyView',id:p.key,c:[esc(p.name),esc(p.mst),p.nOut||'',p.out?vnd(p.out):'',p.nIn||'',p.in?vnd(p.in):'']})))}});
+VIEWS.team=simpleView('staff',{top:()=>'',bottom(){if(role!=='admin')return '';
+  const ids=[...new Set([...Object.keys(S.users),...Object.keys(S.requests)])].filter(x=>x!==me);
+  const logs=arr(S.log).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,40);
+  return `<h3 style="margin:18px 0 6px">Phân quyền phần mềm</h3><div class="note">${pill('Quy tắc','acc')}<span><b>Quản trị</b> (chị và người được chia sẻ quyền sửa) và <b>Kế toán</b> được nạp dữ liệu, gán mã, xác nhận trùng. Mọi người khác <b>chỉ xem</b>. Kế toán cần được mời với quyền Contributor, mở phần mềm và bấm "Đề nghị quyền kế toán", rồi chị cấp ở đây.</span></div>`+
+  table([['Tài khoản'],['Vai trò'],['Trạng thái']],ids.map(id=>({c:[esc(names[id]||'Người dùng '+id.slice(2,8)),`<select data-setrole="${id}" style="width:auto"><option value="xem"${(S.users[id]||{}).role!=='ketoan'?' selected':''}>Chỉ xem</option><option value="ketoan"${(S.users[id]||{}).role==='ketoan'?' selected':''}>Kế toán</option></select>`,S.users[id]?pill('Đã cấp','good'):pill('Đang chờ','warn')]})),{empty:'Chưa có ai đề nghị quyền.'})+
+  `<h3 style="margin:18px 0 6px">Nhật ký hoạt động</h3>`+table([['Thời gian'],['Người làm'],['Việc']],logs.map(l=>({c:[`<span class="nw">${dmy(l.at)} ${String(l.at).slice(11,16)}</span>`,esc(names[l.uid]||(l.uid===me?'Tôi':'Người dùng')),esc(l.text)]})),{empty:'Chưa có hoạt động.'})}});
+document.addEventListener('change',async e=>{const id=e.target.dataset&&e.target.dataset.setrole;if(!id||role!=='admin')return;
+  await put('users',id,{role:e.target.value,at:new Date().toISOString()});logAct('đặt vai trò '+ROLES[e.target.value]+' cho '+(names[id]||'người dùng'));toast('Đã cập nhật')});
+
+/* ================= Nhận dữ liệu tự động (hộp thư + gói 2026) ================= */
+let inboxBusy=false;
+async function processInbox(){
+  if(inboxBusy||!canWrite())return;
+  const items=Object.entries(S.inbox).filter(([,d])=>d&&!d.done&&(d.kind==='inv_in'||d.kind==='inv_out'||d.kind==='inv_lines'||d.kind==='bank'||(!d.kind&&d.bankName&&Array.isArray(d.rows))));if(!items.length)return;
+  inboxBusy=true;let total=0;
+  try{for(const [id,d] of items){let n=0,skip=0;const rows=(d.rows&&d.rows.length)?d.rows:(d.csv?d.csv.split(';').map(x=>x.split(',').map(s=>s.trim())):[]);
+    if(d.kind==='inv_out'||d.kind==='inv_in'){const dir=d.kind==='inv_out'?'out':'in',todo=[];
+      for(const r of rows){const [symbol,no,date,party,net,tot,status,pName]=r;if(BADINV({status})){skip++;continue}
+        const isName=!/^\d{10}(-\d{3})?$/.test(String(party)),mst=isName?'':String(party);
+        const inv={dir,no:String(no),symbol,date,partyName:pName||(isName?String(party).replace(/\s*-\s*Khách hàng không cung cấp thông tin/i,''):'MST '+mst),mst,net:num(net),vat:num(tot)-num(net),total:num(tot),vatRate:num(net)?Math.round((num(tot)-num(net))/num(net)*100):0,source:d.source||'tự động',status:status||'',by:me,createdAt:new Date().toISOString()};
+        inv.key=invKey(inv);const iid=ivId(inv.key);if(S.invoices[iid]){skip++;continue}S.invoices[iid]=inv;todo.push([iid,inv])}
+      await pool(todo,([iid,inv])=>put('invoices',iid,inv),4,(a,b)=>setProg(`Đang nạp hóa đơn ${dir==='out'?'đầu ra':'đầu vào'} ${a}/${b}…`));n=todo.length;
+      await markSync(dir==='out'?'ehd_out':'gdt_in',dir==='out'?'Hóa đơn đầu ra':'Hóa đơn đầu vào',n,skip?skip+' bỏ qua':'');
+    }else if(d.kind==='inv_lines'){const todo=[];
+      for(const r of rows){const [dir,symbol,no,mst,lines]=r;const iid=ivId([dir,symbol||'',String(no),dir==='in'?String(mst||''):OURMST()].join('|')),inv=S.invoices[iid];
+        if(!inv||invLines(inv).length||BADINV(inv)){skip++;continue}
+        const ls=(lines||[]).map(l=>({name:String(l[0]||'').trim(),unit:String(l[1]||'').trim(),qty:num(l[2]),price:num(l[3]),amount:num(l[4])})).filter(l=>l.name);if(!ls.length){skip++;continue}
+        inv.lines=ls;todo.push([iid,ls])}
+      await pool(todo,([iid,ls])=>patch('invoices',iid,{lines:ls}),4,(a,b)=>setProg(`Đang nạp chi tiết hàng hóa ${a}/${b}…`));n=todo.length;
+    }else{ // sao kê ngân hàng
+      let a=(d.accountId&&S.bank[d.accountId])?{id:d.accountId}:findAcc(d.bankName||'',d.last4||'');
+      if(!a){const nid=uid(),doc={bankName:d.bankName||'Khác',accountNo:String(d.last4||'').slice(-4),name:d.name||'',opening:0,type:d.type||'cty'};await put('bank',nid,doc);S.bank[nid]=doc;a={id:nid}}
+      const rs=rows.map((r,i)=>({date:r[0],amount:num(r[1]),desc:r[2],balance:r[3],seq:(d.seq0||0)+i})).filter(r=>r.date&&r.amount);
+      const {fresh,skip:sk}=dedupeRows(a.id,rs);skip=sk;n=await writeTx(a.id,fresh,0);
+      await markSync('bank_'+a.id,'Sao kê '+accName(a.id),n,skip?skip+' GD trùng':'');
+    }
+    await put('inbox',id,{kind:d.kind||'bank',bankName:d.bankName||'',source:d.source||'',rows:[],csv:'',done:true,doneAt:new Date().toISOString(),count:n,skipped:skip});S.inbox[id].done=true;total+=n;ver++;
+  }
+  if(total){logAct('tự động nạp '+total+' dòng dữ liệu');toast('Đã nạp '+total+' dòng dữ liệu mới')}refresh();
+  }catch(e){console.error(e);toast('Nạp dữ liệu tự động bị lỗi: '+(e.message||e.code),'bad')}
+  finally{inboxBusy=false;setProg('')}
+}
+let packTried=false;
+async function loadPack(){ // gói dữ liệu 2026 từ thư mục Thi Đạt, chỉ nạp một lần
+  if(packTried||!canWrite())return;packTried=true;if(S.inbox.pack26v1&&S.inbox.pack26v1.done)return;
+  try{const res=await fetch('pack2026.json');if(!res.ok)return;const pk=await res.json();setProg('Đang đưa gói dữ liệu 2026 vào hộp thư…');
+    for(const id of pk.order){if(S.inbox[id])continue;const d=pk.docs[id];if(!d.kind&&d.bankName)d.kind='bank';await put('inbox',id,d);S.inbox[id]=d}
+    await processInbox();
+    for(const [iid,inv] of Object.entries(S.invoices)){const m=/^MST (\S+)/.exec(inv.partyName||'');const nm=m&&pk.names[m[1]];if(nm){try{await patch('invoices',iid,{partyName:nm});inv.partyName=nm}catch(e){}}}
+    await put('inbox','pack26v1',{kind:'marker',done:true,doneAt:new Date().toISOString()});
+  }catch(e){console.error(e)}finally{setProg('')}
+}
+let autoRan=false;
+async function autoOnLoad(){if(autoRan||!canWrite())return;autoRan=true;await sleep(1500);try{await seedAccounts()}catch(e){console.error(e)}await loadPack();await processInbox();refresh()}
+
+/* ================= Khung ứng dụng ================= */
+const MENU=[['',[['dash','Tổng quan'],['warn','Cảnh báo']]],['Hóa đơn',[['hdin','Hóa đơn đầu vào'],['hdout','Hóa đơn đầu ra'],['mahang','Mã hàng'],['xnt','Xuất nhập tồn']]],['Ngân hàng',[['bankcty','Công ty'],['bankcn','Cá nhân'],['banktong','Tổng']]],['Khác',[['quotes','Báo giá'],['contracts','Hợp đồng'],['partners','Khách hàng - NCC'],['team','Nhân sự']]]];
+function render(){
+  const root=$('#root');if(!role)return;if(!VIEWS[view])view='dash';
+  if(!$('.app',root))root.innerHTML=`<div class="app"><aside class="side"><div class="brand">Thi Đạt<small>Quản lý bán hàng</small></div><nav class="nav" id="nav" aria-label="Menu"></nav><div class="me" id="me"></div></aside><main class="main" id="main"><div class="prog" id="prog" style="display:none"></div><div class="head"><h1 id="ttl"></h1></div><div class="bar" id="bar"></div><div id="body"></div></main></div>`;
+  let al=0;try{al=M().pend.length}catch(e){}
+  $('#nav').innerHTML=MENU.map(([g,l])=>(g?`<div class="grp">${g}</div>`:'')+l.map(([k,t])=>`<button class="${k===view?'on':''}" data-act="go" data-id="${k}">${t}${k==='warn'&&al?`<span class="cnt">${al}</span>`:''}</button>`).join('')).join('');
+  $('#me').innerHTML=`<b>${esc(names[me]||'Tài khoản của tôi')}</b>${ROLES[role]}${role==='xem'&&!S.requests[me]?`<br><button class="btn sm" style="margin-top:6px" data-act="reqRole">Đề nghị quyền kế toán</button>`:''}`;
+  const V_=VIEWS[view];$('#ttl').textContent=V_.title;$('#bar').innerHTML=V_.bar();
+  try{$('#body').innerHTML=V_.body()}catch(e){console.error(e);$('#body').innerHTML='<div class="card neg">Lỗi hiển thị: '+esc(e.message)+'</div>'}
+  setProg(progText);
+}
+let rt=null;
+function refresh(){if(rt)return;rt=setTimeout(()=>{rt=null;if(!role)return gate();const b=$('#body');if(!b)return render();
+  const m=$('#main'),y=m?m.scrollTop:0,ae=document.activeElement,bound=ae&&ae.dataset&&ae.dataset.bind;
+  const tw=$$('.tw',b).map(x=>[x.scrollTop,x.scrollLeft]);
+  render();if(m)m.scrollTop=y;$$('.tw',$('#body')).forEach((x,i)=>{if(tw[i]){x.scrollTop=tw[i][0];x.scrollLeft=tw[i][1]}});
+  if(bound){const e=$(`[data-bind="${bound}"]`);if(e){e.focus();if(e.setSelectionRange&&e.type==='search')e.setSelectionRange(e.value.length,e.value.length)}}},250)}
+function go(v){view=v;render();const m=$('#main');if(m)m.scrollTop=0}
+A.go=d=>{closeModal();go(d.id)};A.close=closeModal;
+A.reqRole=async()=>{try{await put('requests',me,{at:new Date().toISOString(),want:'ketoan'});toast('Đã gửi đề nghị, chờ chị Huyền Thi cấp quyền')}catch(e){toast('Không gửi được. Bạn cần được mời với quyền Contributor.','bad')}};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const f=A[t.dataset.act];if(f){e.preventDefault();e.stopPropagation();f(t.dataset,t)}});
+let bt=null;
+function bindUpdate(e){const k=e.target.dataset&&e.target.dataset.bind;if(!k)return;st[k]=e.target.type==='checkbox'?e.target.checked:e.target.value;
+  clearTimeout(bt);bt=setTimeout(()=>{const b=$('#body');if(b)try{b.innerHTML=VIEWS[view].body()}catch(err){console.error(err)}},e.type==='input'?220:0)}
+document.addEventListener('input',e=>{if(e.target.type==='checkbox'||e.target.tagName==='SELECT'||e.target.type==='date')return;bindUpdate(e)});
+document.addEventListener('change',e=>{if(e.target.type==='checkbox'||e.target.tagName==='SELECT'||e.target.type==='date'){bindUpdate(e);if(e.target.dataset.bind==='ba')setTimeout(()=>{$('#bar').innerHTML=VIEWS[view].bar()},10)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+async function loadNames(){if(!usr||!usr.profiles)return;
+  const ids=[...new Set([me,...Object.keys(S.users),...Object.keys(S.requests),...Object.values(S.log).map(l=>l.uid)].filter(Boolean))].filter(i=>!(i in names));if(!ids.length)return;
+  ids.forEach(i=>names[i]='');try{const ps=await usr.profiles(ids);ids.forEach(i=>{const n=ps&&ps[i]&&ps[i].name;if(n)names[i]=n});refresh()}catch(e){}}
+
+/* ================= Phân quyền và khởi động ================= */
+function gate(){
+  const isAdmin=usr&&(usr.canEdit()||usr.isOwner()),u=S.users[me];
+  role=isAdmin?'admin':(u&&u.role==='ketoan'?'ketoan':'xem');
+  render();loadNames();autoOnLoad();
+}
+(async function boot(){
+  const root=$('#root');
+  try{
+    db=await claude.use('db');usr=await claude.use('user');dl=await claude.use('downloads');
+    if(!db||!usr){root.innerHTML='<div class="center"><h1>Quản lý bán hàng Thi Đạt</h1><p class="mute">Hãy mở phần mềm trong Claude và đăng nhập bằng tài khoản đã được chia sẻ.</p></div>';return}
+    me=await usr.id();if(!me){root.innerHTML='<div class="center"><p class="mute">Không xác định được tài khoản. Hãy đăng nhập Claude rồi tải lại trang.</p></div>';return}
+    const keys=[...COLS,'settings','status','req'];let pending=keys.length,started=false;
+    const done=()=>{if(--pending===0&&!started){started=true;gate()}};
+    COLS.forEach(c=>{let first=true;db.collection(c).onSnapshot(snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='removed')delete S[c][ch.doc.id];else S[c][ch.doc.id]=ch.doc.data()});ver++;if(first){first=false;done()}else refresh()},err=>{console.error(c,err);if(first){first=false;done()}})});
+    let f1=true,f2=true,f3=true;
+    db.doc('settings/main').onSnapshot(s=>{S.settings=s.exists?s.data():{};ver++;if(f1){f1=false;done()}else refresh()},()=>{if(f1){f1=false;done()}});
+    db.doc('sync/status').onSnapshot(s=>{S.sync=s.exists?s.data():{};if(f2){f2=false;done()}else refresh()},()=>{if(f2){f2=false;done()}});
+    db.doc('sync/request').onSnapshot(s=>{S.syncReq=s.exists?s.data():null;if(f3){f3=false;done()}else refresh()},()=>{if(f3){f3=false;done()}});
+    db.collection('log').orderBy('at','desc').limit(80).onSnapshot(snap=>{S.log={};snap.docs.forEach(d=>S.log[d.id]=d.data());refresh()},()=>{});
+    setTimeout(()=>{if(!started){started=true;gate();toast('Một phần dữ liệu chưa tải xong, có thể chưa đầy đủ','bad')}},10000);
+  }catch(e){console.error(e);root.innerHTML='<div class="center"><p class="neg">Không khởi động được phần mềm: '+esc(e.message||e.code||'lỗi')+'</p></div>'}
+})();
+</script>
+</body>
+</html>
