@@ -183,7 +183,7 @@ const COMPANY={name:'Công ty TNHH Thi Đạt',mst:'0312510655'};
 const OURMST=()=>digits((S.settings.company||{}).mst||COMPANY.mst);
 
 /* ================= Trạng thái ================= */
-const COLS=['bank','bankTx','invoices','items','convs','inbox','users','requests','partners','quotes','contracts','cc_emps','cc_projects','cc_ts'];
+const COLS=['bank','bankTx','invoices','items','convs','inbox','users','requests','partners','quotes','contracts','cc_emps','cc_projects','cc_ts','cost','costmark'];
 const S={settings:{},sync:{},syncReq:null,log:{}};COLS.forEach(c=>S[c]={});
 let db=null,usr=null,dl=null,me=null,role=null,ver=0,view='dash',names={};
 const st={}; // bộ lọc theo màn hình
@@ -422,13 +422,13 @@ const invBar=dir=>{const m=st.ivm||'tq';return `<div class="tabs"><button class=
 function invBody(dir){
   const isIn=dir==='in',l=invList(dir),ok=l.filter(i=>!BADINV(i)),bad=arr(S.invoices).filter(i=>i.dir===dir&&BADINV(i)&&inR(i.date,rng())).length,nol=ok.filter(i=>!invLines(i).length).length;
   const tiles=`<div class="tiles"><div class="card tile"><div class="l">Số hóa đơn</div><div class="v">${ok.length}</div><div class="s">${bad?bad+' HĐ hủy / bị thay thế không tính':'Đã bỏ HĐ hủy, bị thay thế'}</div></div><div class="card tile"><div class="l">Tiền hàng chưa thuế</div><div class="v">${vnd(sum(ok,i=>i.net))} đ</div></div><div class="card tile"><div class="l">Thuế GTGT</div><div class="v">${vnd(sum(ok,i=>i.vat))} đ</div></div><div class="card tile"><div class="l">Tổng thanh toán</div><div class="v">${vnd(sum(ok,i=>i.total))} đ</div>${nol?`<div class="s">${nol} HĐ chưa có chi tiết hàng</div>`:''}</div></div>`;
-  if((st.ivm||'tq')==='tq')return tiles+table([['Ngày'],['Ký hiệu'],['Số HĐ'],[isIn?'Người bán':'Người mua','w'],['MST'],['Chưa thuế','r'],['Thuế','r'],['Tổng','r'],['Dòng hàng','r'],['Trạng thái']],
-    l.map(i=>({act:'invView',id:i.id,cls:BADINV(i)?'dim':'',c:[`<span class="nw">${dmy(i.date)}</span>`,esc(i.symbol||''),esc(i.no),esc(i.partyName||''),esc(i.mst||''),vnd(i.net),vnd(i.vat),vnd(i.total),invLines(i).length||'<span class="mute">—</span>',BADINV(i)?pill(i.status||'Hủy','bad'):pill('Hợp lệ','good')]})),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});
+  if((st.ivm||'tq')==='tq')return tiles+table([['Ngày'],['Ký hiệu'],['Số HĐ'],[isIn?'Người bán':'Người mua','w'],['MST'],['Chưa thuế','r'],['Thuế','r'],['Tổng','r'],['Dòng hàng','r'],['Trạng thái'],...(isIn?[['Loại']]:[])],
+    l.map(i=>({act:'invView',id:i.id,cls:BADINV(i)?'dim':'',c:[`<span class="nw">${dmy(i.date)}</span>`,esc(i.symbol||''),esc(i.no),esc(i.partyName||''),esc(i.mst||''),vnd(i.net),vnd(i.vat),vnd(i.total),invLines(i).length||'<span class="mute">—</span>',BADINV(i)?pill(i.status||'Hủy','bad'):pill('Hợp lệ','good'),...(isIn?[(()=>{const c=invCost(i);return c.amt?(c.all?`<span class="pill warn">Chi phí · ${esc(c.cat)}</span>`:`<span class="pill gold">Một phần chi phí</span>`):'<span class="pill acc">Thương mại</span>'})()]:[])]})),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});
   const rows=[];ok.forEach(i=>invLines(i).forEach((x,k)=>rows.push({i,x,k})));
   const unm=rows.filter(r=>!cvOf(r.x.name,r.x.unit)).length;
   return tiles+(unm?`<div class="note">${pill('Cần gán mã','warn')}<span><b>${unm}</b> dòng hàng chưa gán mã. Bấm <b>Quy đổi</b> ở cột đầu để chọn mã hàng, đơn vị đích và hệ số. Gán một lần là mọi hóa đơn cùng tên, cùng đơn vị đều theo.</span></div>`:'')+
-   table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã hàng · quy đổi'],['Ngày'],['Số HĐ'],[isIn?'Người bán':'Người mua','w']],
-   rows.map(({i,x,k})=>{const c=conv(x);return{c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code||'—')}</b> ${qf(c.qty)} ${esc(c.unit)}${c.f!==1?` <span class="mute">(×${qf(c.f)})</span>`:''}`:'<span class="mute">Chưa gán</span>',`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:'Chưa có dòng hàng nào trong khoảng ngày này. Chi tiết hàng lấy từ file XML hóa đơn hoặc file chi tiết trong thư mục Thi Đạt.'});
+   table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã hàng · quy đổi'],...(isIn?[['Chi phí / thương mại']]:[]),['Ngày'],['Số HĐ'],[isIn?'Người bán':'Người mua','w']],
+   rows.map(({i,x,k})=>{const c=conv(x),cc=isIn?costOf(i,x):null;return{cls:cc&&cc.cp?'dim':'',c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code||'—')}</b> ${qf(c.qty)} ${esc(c.unit)}${c.f!==1?` <span class="mute">(×${qf(c.f)})</span>`:''}`:'<span class="mute">Chưa gán</span>',...(isIn?[costPill(cc)+(canWrite()?` <button class="btn sm" data-act="cpLine" data-id="${i.id}" data-ln="${k}">Đổi</button>`:'')]:[]),`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:'Chưa có dòng hàng nào trong khoảng ngày này. Chi tiết hàng lấy từ file XML hóa đơn hoặc file chi tiết trong thư mục Thi Đạt.'});
 }
 VIEWS.hdin={title:'Hóa đơn đầu vào',bar:()=>invBar('in'),body:()=>invBody('in')};
 VIEWS.hdout={title:'Hóa đơn đầu ra',bar:()=>invBar('out'),body:()=>invBody('out')};
@@ -436,7 +436,8 @@ A.ivMode=d=>{st.ivm=d.id;render()};
 A.invView=d=>{const i=S.invoices[d.id];if(!i)return;const isIn=i.dir==='in';
   modal({title:`Hóa đơn ${esc(i.symbol||'')} ${esc(i.no)} ${BADINV(i)?pill(i.status||'Hủy','bad'):''}`,wide:true,body:`<p style="margin-top:0"><b>${esc(i.partyName||'')}</b>${i.mst?' · MST '+esc(i.mst):''} · ${dmy(i.date)} · ${isIn?'Đầu vào':'Đầu ra'}${i.source?` · <span class="mute">${esc(i.source)}</span>`:''}</p>
   <div class="tiles"><div class="card tile"><div class="l">Chưa thuế</div><div class="v">${vnd(i.net)}</div></div><div class="card tile"><div class="l">Thuế</div><div class="v">${vnd(i.vat)}</div></div><div class="card tile"><div class="l">Tổng</div><div class="v">${vnd(i.total)}</div></div></div>`+
-  table([['Gán mã'],['Hàng hóa'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã · quy đổi']],invLines(i).map((x,k)=>{const c=conv(x);return{c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${d.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code)}</b> ${qf(c.qty)} ${esc(c.unit)}`:'<span class="mute">Chưa gán</span>']}}),{empty:'Hóa đơn này chưa có chi tiết hàng. Nạp file XML của hóa đơn để bổ sung.'}),
+  (isIn?`<div class="card" style="margin-bottom:12px"><div class="fg">${F('inv_purpose','Hóa đơn này là',i.purpose||'',{type:'select',opts:[['','Để phần mềm tự nhận ('+(costOf(i,null).cp?'đang là chi phí':'đang là thương mại')+')'],['cp','Chi phí, không đưa vào thương mại'],['tm','Hàng thương mại']]})}${F('inv_costcat','Nhóm chi phí',i.costCat||costOf(i,null).cat||COSTCATS[4],{type:'select',opts:[...COSTCATS,'Khác'].map(c=>[c,c])})}</div>${canWrite()?`<div style="margin-top:8px"><button class="btn sm pri" data-act="invPurpose" data-id="${d.id}">Lưu loại hóa đơn</button></div>`:''}</div>`:'')+
+  table([['Gán mã'],['Hàng hóa'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã · quy đổi'],...(isIn?[['Loại']]:[])],invLines(i).map((x,k)=>{const c=conv(x);return{c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${d.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code)}</b> ${qf(c.qty)} ${esc(c.unit)}`:'<span class="mute">Chưa gán</span>',...(isIn?[costPill(costOf(i,x))+(canWrite()?` <button class="btn sm" data-act="cpLine" data-id="${d.id}" data-ln="${k}">Đổi</button>`:'')]:[])]}}),{empty:'Hóa đơn này chưa có chi tiết hàng. Nạp file XML của hóa đơn để bổ sung.'}),
   extra:role==='admin'?`<button class="btn bad" id="idel" style="margin-right:auto">Xóa hóa đơn</button>`:''});
   const b=$('#idel');if(b)b.onclick=async()=>{if(await confirmBox(`Xóa hóa đơn <b>${esc(i.no)}</b> khỏi phần mềm?`,'Xóa')){await del('invoices',d.id);logAct('xóa hóa đơn '+i.no);closeModal()}};
 };
@@ -524,11 +525,86 @@ A.cvOpen=d=>{
 A.cvPick=d=>{const L=$('#layer'),s=$('#cv_item',L);if(!s)return;s.value=d.id;const it=S.items[d.id];if(it&&!$('#cv_to',L).value)$('#cv_to',L).value=it.unit||''};
 
 /* ================= MÃ HÀNG ================= */
+/* ================= HÀNG CHI PHÍ: không đưa vào thương mại ================= */
+// Từ khóa mặc định, chị sửa được ở tab "Từ khóa nhận diện". So khớp không dấu, không phân biệt hoa thường, theo cả cụm từ.
+const COSTDEF={
+ 'Vận chuyển, đi lại':{ncc:'be group, dich vu tuc thoi, ahamove, lalamove, grab, gojek, di chuyen xanh, xanh sm, gsm, van tai xanh, ban uong toi lai, buu chinh, viettel post, vnpost, giao hang nhanh, giao hang tiet kiem, ghn, ghtk, j&t, ninja van, hang khong, vietjet, bamboo airways, dang kiem, khach san, hotel, resort, du lich',hang:'cuoc phi van chuyen, cuoc van chuyen, cuoc xe, phi van chuyen, van chuyen, giao hang, phi giao hang, chuyen xe, phi nen tang, ve may bay, tien tip, phi cau duong, gui xe'},
+ 'Ăn uống':{ncc:'nha hang, quan an, am thuc, lang nuong, kitchen, tai pai dong, cafe, coffee, ca phe, highlands, phuc long, katinat, starbucks, tra sua, com tam, banh mi',hang:'suat an, an uong, nuoc suoi, nuoc ngot, bia lon, bia chai, ca phe, tra sua, khan lanh, com trua, com hop, com phan, com tam, com ga, lau thai, lau de, lau bo, do an'},
+ 'Điện thoại, Internet':{ncc:'vien thong quan doi, viettel dong nai, vinaphone, mobifone, vnpt, fpt telecom',hang:'the cao, goi cuoc, cuoc vien thong, cuoc dien thoai, cuoc internet, goi internet, dich vu internet, data 4g, data 5g'},
+ 'Xăng dầu':{ncc:'xang dau, petrolimex, petro',hang:'xang, ron 95, ron 92, dau diesel, dau do'},
+ 'Ngân hàng, bảo hiểm, dịch vụ khác':{ncc:'ngan hang, bao hiem, dau thau qua mang, cong chung, tham dinh gia, dich vu tai san, nha sach, khu cong nghiep, quang cao, easyca, co.op, coop, bach hoa xanh, sieu thi, winmart',hang:'phi dich vu, phi chuyen tien, phi quan ly, phi duy tri, le phi, phi ho so, thu chi phi, bao hiem, chu ky so, phi thuong nien'}};
+const COSTCATS=Object.keys(COSTDEF);
+const costCfg=()=>((S.cost||{}).cfg)||{};
+const kwList=s=>String(s||'').split(/[,;\n]/).map(x=>norm(x).replace(/[^a-z0-9& .]/g,' ').replace(/\s+/g,' ').trim()).filter(x=>x.length>=2);
+const kwRe=s=>{const l=kwList(s);return l.length?new RegExp(' ('+l.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+') '):null};
+const textN=s=>' '+norm(s).replace(/[^a-z0-9& .]/g,' ').replace(/\s+/g,' ').trim()+' ';
+let costMemo={v:-1};
+function costRules(){if(costMemo.v===ver)return costMemo.r;const r=(costCfg().rules)||{};
+  costMemo={v:ver,r:COSTCATS.map(cat=>{const c=r[cat]||COSTDEF[cat];return{cat,rn:kwRe(c.ncc),rh:kwRe(c.hang)}})};return costMemo.r}
+const costKey=(name,unit)=>cvId(name,unit);
+function costOf(inv,l){ // {cp, cat, why}
+  if(!inv||inv.dir!=='in')return{cp:false};
+  const mk=l&&S.costmark[costKey(l.name,l.unit)];
+  if(mk)return mk.cp?{cp:true,cat:mk.cat||'Khác',why:'Chị đánh dấu'+(mk.note?': '+mk.note:'')}:{cp:false,why:'Chị đánh dấu là thương mại'};
+  if(inv.purpose==='cp')return{cp:true,cat:inv.costCat||'Khác',why:'Cả hóa đơn là chi phí'};
+  if(inv.purpose==='tm')return{cp:false,why:'Cả hóa đơn là thương mại'};
+  const R=costRules(),pn=textN(inv.partyName);
+  for(const r of R)if(r.rn&&r.rn.test(pn))return{cp:true,cat:r.cat,why:'Người bán khớp từ khóa'};
+  if(l){const ln=textN(l.name);for(const r of R)if(r.rh&&r.rh.test(ln))return{cp:true,cat:r.cat,why:'Tên hàng khớp từ khóa'}}
+  return{cp:false};
+}
+const isCostLine=(i,l)=>i.dir==='in'&&costOf(i,l).cp;
+function invCost(i){ // phần chi phí của một hóa đơn đầu vào: {amt, cat, all}
+  if(i.dir!=='in')return{amt:0};const ls=invLines(i);
+  if(!ls.length){const c=costOf(i,null);return c.cp?{amt:num(i.net),cat:c.cat,all:true}:{amt:0}}
+  let amt=0,cat='',n=0;ls.forEach(l=>{const c=costOf(i,l);if(c.cp){amt+=num(l.amount)||num(l.qty)*num(l.price);cat=cat||c.cat;n++}});
+  return{amt,cat,all:n===ls.length,part:n>0&&n<ls.length};
+}
+const costPill=c=>c.cp?`<span class="pill warn" title="${esc(c.why||'')}">Chi phí · ${esc(c.cat)}</span>`:'<span class="pill acc">Thương mại</span>';
+VIEWS.chiphi={title:'Hàng chi phí',bar(){const t=st.cpt||'tong';
+  return `<div class="tabs">${[['tong','Tổng hợp'],['hang','Tên hàng chi phí'],['ncc','Theo người bán'],['tk','Từ khóa nhận diện']].map(([k,l])=>`<button class="${t===k?'on':''}" data-act="cpTab" data-id="${k}">${l}</button>`).join('')}</div>${t==='tk'?'':dateBar()}${t==='hang'?`<input type="search" placeholder="Tìm tên hàng" data-bind="cpq" value="${esc(st.cpq||'')}">`:''}<button class="btn pri" data-act="cpXlsx">Xuất Excel</button>`},
+ body(){const t=st.cpt||'tong',r=rng(),inv=goodInv('in').filter(i=>inR(i.date,r));
+  const intro=`<div class="note">${pill('Quy tắc','acc')}<span>Hóa đơn đầu vào thuộc <b>chi phí</b> (Be, Ahamove, Lalamove, Grab, Xanh SM, ăn uống, điện thoại, xăng dầu, ngân hàng, bảo hiểm, dịch vụ khác…) <b>không đưa vào thương mại</b>: không hiện trong Danh mục hàng hóa, Mã hàng và Xuất nhập tồn. Phần mềm tự nhận theo tên người bán và tên hàng; chỗ nào nhận sai, chị bấm nút ở dòng đó để đổi.</span></div>`;
+  if(t==='tk'){const c=costCfg().rules||{};
+    return intro+(canWrite()?'':'<p class="mute">Chỉ quản trị và kế toán sửa được từ khóa.</p>')+COSTCATS.map((cat,k)=>{const v=c[cat]||COSTDEF[cat];return `<div class="card grpcard"><h3 style="margin-bottom:8px">${esc(cat)}</h3><div class="fg">${F('cpn'+k,'Tên người bán có chứa (cách nhau bằng dấu phẩy)',v.ncc,{type:'area',cls:'full'})}${F('cph'+k,'Tên hàng có chứa',v.hang,{type:'area',cls:'full'})}</div></div>`}).join('').replace(/id="cp([nh])(\d)"/g,'id="cp$1$2" data-cpk="$1$2"'+(canWrite()?'':' disabled'))+
+      (canWrite()?`<div class="bar"><button class="btn pri" data-act="cpSaveKw">Lưu từ khóa</button><button class="btn" data-act="cpResetKw">Trả về mặc định</button></div>`:'')}
+  const rows=[];inv.forEach(i=>{const ls=invLines(i);if(!ls.length){const c=costOf(i,null);if(c.cp)rows.push({i,l:null,c,amt:num(i.net)});return}
+    ls.forEach((l,k)=>{const c=costOf(i,l);if(c.cp)rows.push({i,l,k,c,amt:num(l.amount)||num(l.qty)*num(l.price)})})});
+  if(t==='hang'){const q=norm(st.cpq||''),g={};rows.filter(x=>x.l).forEach(x=>{const key=costKey(x.l.name,x.l.unit),o=g[key]=g[key]||{name:x.l.name,unit:x.l.unit||'',cat:x.c.cat,why:x.c.why,n:0,amt:0,ncc:new Set(),id:x.i.id,ln:x.k};o.n++;o.amt+=x.amt;o.ncc.add(x.i.partyName||'')});
+    const l=Object.values(g).filter(o=>!q||norm(o.name+' '+[...o.ncc].join(' ')).includes(q)).sort((a,b)=>b.amt-a.amt);
+    return intro+table([['Đổi'],['Tên hàng','w'],['ĐVT'],['Nhóm chi phí'],['Lý do'],['Số dòng','r'],['Tiền chưa thuế','r'],['Người bán','w']],l.map(o=>({c:[canWrite()?`<button class="btn sm" data-act="cpLine" data-id="${o.id}" data-ln="${o.ln}">Sửa</button>`:'',esc(o.name),esc(o.unit),esc(o.cat),`<span class="mute">${esc(o.why)}</span>`,o.n,vnd(o.amt),esc([...o.ncc].slice(0,2).join('; '))]})),{empty:'Chưa có tên hàng nào thuộc chi phí trong kỳ.'})}
+  if(t==='ncc'){const g={};rows.forEach(x=>{const k=partyKey(x.i),o=g[k]=g[k]||{name:x.i.partyName,cat:x.c.cat,inv:new Set(),amt:0};o.inv.add(x.i.id);o.amt+=x.amt});
+    return intro+table([['Người bán','w'],['Nhóm chi phí'],['Số HĐ','r'],['Tiền chưa thuế','r']],Object.values(g).sort((a,b)=>b.amt-a.amt).map(o=>({c:[esc(o.name),esc(o.cat),o.inv.size,vnd(o.amt)]})),{empty:'Không có.'})}
+  const byCat={};rows.forEach(x=>{const o=byCat[x.c.cat]=byCat[x.c.cat]||{inv:new Set(),amt:0};o.inv.add(x.i.id);o.amt+=x.amt});
+  const note=costCfg().note||'';
+  return intro+`<div class="card" style="margin-bottom:12px"><h3 style="margin-bottom:6px">Ghi chú của chị về hàng chi phí</h3><textarea id="cpnote" ${canWrite()?'':'disabled'} placeholder="VD: Hóa đơn Be, Ahamove, Lalamove, Grab, ăn uống, điện thoại, xăng dầu, dịch vụ khác… đều là chi phí, không đưa vào thương mại." style="min-height:90px">${esc(note)}</textarea>${canWrite()?'<div style="margin-top:8px"><button class="btn pri" data-act="cpSaveNote">Lưu ghi chú</button></div>':''}</div>
+  <div class="tiles"><div class="card tile"><div class="l">Tổng chi phí (chưa thuế)</div><div class="v">${vnd(sum(rows,x=>x.amt))} đ</div><div class="s">${new Set(rows.map(x=>x.i.id)).size} hóa đơn</div></div>${COSTCATS.concat(['Khác']).filter(c=>byCat[c]).map(c=>`<div class="card tile"><div class="l">${esc(c)}</div><div class="v">${vnd(byCat[c].amt)} đ</div><div class="s">${byCat[c].inv.size} hóa đơn</div></div>`).join('')}</div>`;
+ }};
+A.cpTab=d=>{st.cpt=d.id;render()};
+A.cpSaveNote=async()=>{await put('cost','cfg',{...costCfg(),note:$('#cpnote').value});logAct('lưu ghi chú hàng chi phí');toast('Đã lưu ghi chú')};
+A.cpSaveKw=async()=>{const rules={};COSTCATS.forEach((cat,k)=>{rules[cat]={ncc:$('#cpn'+k).value.trim(),hang:$('#cph'+k).value.trim()}});await put('cost','cfg',{...costCfg(),rules});ver++;logAct('sửa từ khóa nhận diện chi phí');toast('Đã lưu từ khóa, phần mềm phân loại lại ngay')};
+A.cpResetKw=async()=>{if(!await confirmBox('Trả từ khóa về mặc định?','Trả về'))return;const c={...costCfg()};delete c.rules;await put('cost','cfg',c);ver++;render()};
+/* đánh dấu một tên hàng (mọi hóa đơn cùng tên, cùng đơn vị) */
+function cpMarkForm(items,title){
+  const cur=S.costmark[costKey(items[0].name,items[0].unit)]||{};
+  modal({title,body:`<p class="mute" style="margin-top:0">${items.map(x=>esc(x.name)+' ('+esc(x.unit||'—')+')').join('<br>')}</p><div class="fg">${F('cp_kind','Mặt hàng này là',cur.cp===false?'tm':'cp',{type:'select',opts:[['cp','Chi phí (không đưa vào thương mại)'],['tm','Hàng thương mại']]})}${F('cp_cat','Nhóm chi phí',cur.cat||COSTCATS[4],{type:'select',opts:[...COSTCATS,'Khác'].map(c=>[c,c])})}${F('cp_note','Ghi chú',cur.note||'',{cls:'full'})}</div><p class="mute" style="font-size:12.5px">Áp dụng cho mọi hóa đơn đầu vào có cùng tên, cùng đơn vị.</p>`,
+   extra:Object.keys(cur).length?`<button class="btn" id="cpauto" style="margin-right:auto">Để phần mềm tự nhận</button>`:'',
+   async onOk(){const cp=V('cp_kind')==='cp';for(const x of items)await put('costmark',costKey(x.name,x.unit),{name:x.name,unit:x.unit||'',cp,cat:cp?V('cp_cat'):'',note:V('cp_note'),by:me,at:new Date().toISOString()});
+     logAct((cp?'đánh dấu chi phí: ':'đánh dấu thương mại: ')+items.map(x=>x.name).join(', '));ver++;toast('Đã lưu');setTimeout(render,50)}});
+  const b=$('#cpauto');if(b)b.onclick=async()=>{for(const x of items)await del('costmark',costKey(x.name,x.unit));ver++;closeModal();render()};
+}
+A.cpLine=d=>{if(!canWrite())return;const i=S.invoices[d.id],l=i&&invLines(i)[+d.ln];if(!l)return;cpMarkForm([l],'Chi phí hay thương mại')};
+A.cpGroup=d=>{if(!canWrite())return;const keys=String(d.id).split('§');const g=catalog().find(x=>x.items.some(it=>keys.includes(it.key)));if(!g)return;cpMarkForm(g.items,'Đánh dấu nhóm hàng là chi phí')};
+A.invPurpose=async d=>{const v=$('#inv_purpose').value,cat=$('#inv_costcat').value;await patch('invoices',d.id,v?{purpose:v,costCat:v==='cp'?cat:''}:{purpose:'',costCat:''});ver++;logAct('đặt loại hóa đơn '+(S.invoices[d.id]||{}).no);toast('Đã lưu');A.invView(d)};
+A.cpXlsx=()=>{const r=rng(),out=[];goodInv('in').filter(i=>inR(i.date,r)).forEach(i=>{const ls=invLines(i);if(!ls.length){const c=costOf(i,null);if(c.cp)out.push({'Ngày':i.date,'Số HĐ':i.no,'Người bán':i.partyName,'MST':i.mst,'Tên hàng':'(cả hóa đơn)','ĐVT':'','SL':'','Tiền chưa thuế':num(i.net),'Nhóm chi phí':c.cat,'Lý do':c.why});return}
+  ls.forEach(l=>{const c=costOf(i,l);if(c.cp)out.push({'Ngày':i.date,'Số HĐ':i.no,'Người bán':i.partyName,'MST':i.mst,'Tên hàng':l.name,'ĐVT':l.unit,'SL':num(l.qty),'Tiền chưa thuế':num(l.amount)||num(l.qty)*num(l.price),'Nhóm chi phí':c.cat,'Lý do':c.why})})});
+  exportXlsx(`chi-phi-${r[0]}-${r[1]}.xlsx`,{'Hàng chi phí':out})};
+
 /* ================= DANH MỤC HÀNG HÓA (tạm, gom từ hóa đơn đầu vào) ================= */
 let dmMemo={v:-1};
 function catalog(){
   if(dmMemo.v===ver&&dmMemo.th===(st.dmTh||'0.9'))return dmMemo.g;
-  const N={};goodInv('in').forEach(i=>invLines(i).forEach(x=>{const nm=String(x.name||'').trim();if(!nm||num(x.amount)===0&&num(x.price)===0&&/tang kem|khuyen mai/.test(norm(nm)))return;
+  const N={};goodInv('in').forEach(i=>invLines(i).forEach(x=>{const nm=String(x.name||'').trim();if(isCostLine(i,x)){return}if(!nm||num(x.amount)===0&&num(x.price)===0&&/tang kem|khuyen mai/.test(norm(nm)))return;
     const k=norm(nm).replace(/\s+/g,' ')+'|'+norm(x.unit),r=N[k]=N[k]||{key:norm(x.name)+'|'+norm(x.unit),name:nm,unit:x.unit||'',n:0,qty:0,amt:0,last:'',lastPrice:0,minP:Infinity,maxP:0,ncc:new Set()};
     r.n++;r.qty+=num(x.qty);r.amt+=num(x.amount)||num(x.qty)*num(x.price);const p=num(x.price);if(p>0){r.minP=Math.min(r.minP,p);r.maxP=Math.max(r.maxP,p)}
     if((i.date||'')>=r.last){r.last=i.date;r.lastPrice=p}r.ncc.add(i.partyName||'')}));
@@ -545,16 +621,16 @@ function catalog(){
 VIEWS.danhmuc={title:'Danh mục hàng hóa',bar:()=>`<select data-bind="dmTh" aria-label="Mức giống">${[['0.9','Gom tên giống từ 90% (chắc chắn)'],['0.85','Gom tên giống từ 85%'],['0.8','Gom tên giống từ 80% (cần xem lại)']].map(([v,t])=>`<option value="${v}"${(st.dmTh||'0.9')===v?' selected':''}>${t}</option>`).join('')}</select><input type="search" placeholder="Tìm tên hàng, nhà cung cấp" data-bind="dmq" value="${esc(st.dmq||'')}"><label class="chk"><input type="checkbox" data-bind="dmMulti" ${st.dmMulti?'checked':''}> Chỉ nhóm có nhiều tên</label><button class="btn pri" data-act="dmXlsx">Xuất Excel</button>`,
  body(){const q=norm(st.dmq||''),all=catalog();const l=all.filter(g=>(!st.dmMulti||g.items.length>1)&&(!q||norm(g.items.map(x=>x.name).join(' ')+' '+g.ncc.join(' ')).includes(q)));
   const multi=all.filter(g=>g.items.length>1);
-  return `<div class="note">${pill('Tạm thời','gold')}<span>Danh mục tạm, tập hợp mọi tên hàng trên <b>hóa đơn đầu vào</b>. Các tên giống nhau từ <b>${Math.round((st.dmTh||0.9)*100)}%</b> trở lên (so từng ký tự sau khi bỏ dấu, khoảng trắng; các con số phải khớp; không gom khác loại phụ kiện như co với tê) được <b>gom chung một nhóm</b>. Số % bên cạnh mỗi tên là độ giống với tên đại diện. Khi chị chọn lọc xong, bấm <b>Tạo mã cho nhóm</b> để gán mã hàng MH…; nhóm nào gom sai thì bỏ chọn tên đó trong hộp tạo mã.</span></div>
+  return `<div class="note">${pill('Tạm thời','gold')}<span>Danh mục tạm, tập hợp tên hàng thương mại trên <b>hóa đơn đầu vào</b> (đã loại hàng chi phí như Be, Ahamove, Grab, ăn uống, xăng dầu… xem mục Hàng chi phí; mặt hàng nào là chi phí thì bấm <b>Là chi phí</b>). Các tên giống nhau từ <b>${Math.round((st.dmTh||0.9)*100)}%</b> trở lên (so từng ký tự sau khi bỏ dấu, khoảng trắng; các con số phải khớp; không gom khác loại phụ kiện như co với tê) được <b>gom chung một nhóm</b>. Số % bên cạnh mỗi tên là độ giống với tên đại diện. Khi chị chọn lọc xong, bấm <b>Tạo mã cho nhóm</b> để gán mã hàng MH…; nhóm nào gom sai thì bỏ chọn tên đó trong hộp tạo mã.</span></div>
   <div class="tiles"><div class="card tile"><div class="l">Nhóm hàng</div><div class="v">${all.length}</div><div class="s">từ ${sum(all,g=>g.items.length)} tên khác nhau</div></div><div class="card tile"><div class="l">Nhóm có nhiều tên</div><div class="v">${multi.length}</div><div class="s">${sum(multi,g=>g.items.length)} tên được gom</div></div><div class="card tile"><div class="l">Đã có mã hàng</div><div class="v">${all.filter(g=>g.code).length}</div><div class="s">nhóm</div></div></div>`+
   table([['Tạo mã'],['Tên đại diện','w'],['Các tên trong nhóm','w2'],['ĐVT'],['Số dòng HĐ','r'],['Giá nhập','r'],['Tổng tiền nhập','r'],['Nhà cung cấp','w'],['Nhập gần nhất']],
-   l.map(g=>({c:[g.code?`<b>${esc(g.code)}</b>`:canWrite()?`<button class="btn sm gold" data-act="mhMerge" data-id="${esc(g.items.filter(x=>!cvOf(x.name,x.unit)).map(x=>x.key).join('§'))}">Tạo mã cho nhóm</button>`:'<span class="mute">Chưa có mã</span>',
+   l.map(g=>({c:[g.code?`<b>${esc(g.code)}</b>`:canWrite()?`<button class="btn sm gold" data-act="mhMerge" data-id="${esc(g.items.filter(x=>!cvOf(x.name,x.unit)).map(x=>x.key).join('§'))}">Tạo mã cho nhóm</button><br><button class="btn sm" style="margin-top:4px" data-act="cpGroup" data-id="${esc(g.items.map(x=>x.key).join('§'))}">Là chi phí</button>`:'<span class="mute">Chưa có mã</span>',
     `<b>${esc(g.main.name)}</b>`,g.items.length>1?g.items.map(x=>`${esc(x.name)} <span class="mute">(${esc(x.unit||'—')}, ${x.n} dòng${x.sim<1?', giống '+Math.round(x.sim*100)+'%':''})</span>`).join('<br>'):'<span class="mute">—</span>',esc(g.units.join(', ')),g.n,
     (()=>{const ps=g.items.filter(x=>x.maxP>0);if(!ps.length)return '';const mn=Math.min(...ps.map(x=>x.minP)),mx=Math.max(...ps.map(x=>x.maxP));return mn===mx?vnd(mn):vnd(mn)+' – '+vnd(mx)})(),vnd(g.amt),esc(g.ncc.slice(0,2).join('; '))+(g.ncc.length>2?` <span class="mute">+${g.ncc.length-2}</span>`:''),dmy(g.last)]})),{empty:'Chưa có chi tiết hàng hóa trên hóa đơn đầu vào.'});
  }};
 A.dmXlsx=()=>{const g=catalog(),rows=[];g.forEach((x,k)=>x.items.forEach(it=>rows.push({'Nhóm':k+1,'Tên đại diện':x.main.name,'Tên trên hóa đơn':it.name,'ĐVT':it.unit,'Số dòng HĐ':it.n,'Tổng SL':+it.qty.toFixed(4),'Giá nhập thấp nhất':it.maxP?it.minP:'','Giá nhập cao nhất':it.maxP||'','Giá gần nhất':it.lastPrice,'Tổng tiền nhập':Math.round(it.amt),'Nhà cung cấp':[...it.ncc].join('; '),'Độ giống':Math.round((it.sim??1)*100)+'%','Mã hàng':x.code})));
   exportXlsx('danh-muc-hang-hoa-'+today()+'.xlsx',{'Danh mục (theo nhóm)':rows})};
-function unmapped(){const m={};goodInv().forEach(i=>invLines(i).forEach((x,k)=>{if(cvOf(x.name,x.unit))return;const key=norm(x.name)+'|'+norm(x.unit),r=m[key]=m[key]||{key,name:x.name,unit:x.unit||'',n:0,qty:0,id:i.id,ln:k,dirs:new Set()};r.n++;r.qty+=num(x.qty);r.dirs.add(i.dir)}));return Object.values(m).sort((a,b)=>b.n-a.n)}
+function unmapped(){const m={};goodInv().forEach(i=>invLines(i).forEach((x,k)=>{if(cvOf(x.name,x.unit)||isCostLine(i,x))return;const key=norm(x.name)+'|'+norm(x.unit),r=m[key]=m[key]||{key,name:x.name,unit:x.unit||'',n:0,qty:0,id:i.id,ln:k,dirs:new Set()};r.n++;r.qty+=num(x.qty);r.dirs.add(i.dir)}));return Object.values(m).sort((a,b)=>b.n-a.n)}
 function mergeSuggest(un){ // gom các tên chưa gán có độ giống cao
   const toks=un.map(u=>tokOf(u.name)),used=new Set(),out=[];
   for(let i=0;i<un.length&&out.length<40;i++){if(used.has(i))continue;const g=[i];
@@ -595,7 +671,7 @@ A.mhXlsx=()=>{const rows=[];arr(S.items).sort((a,b)=>String(a.code).localeCompar
 
 /* ================= XUẤT NHẬP TỒN ================= */
 function xnt(from,to){const m={};
-  goodInv().filter(i=>i.date&&i.date<=to).forEach(i=>invLines(i).forEach(x=>{const c=conv(x),k=(c.code?'#'+c.code:'@'+norm(c.name))+'|'+norm(c.unit);
+  goodInv().filter(i=>i.date&&i.date<=to).forEach(i=>invLines(i).forEach(x=>{if(isCostLine(i,x))return;const c=conv(x),k=(c.code?'#'+c.code:'@'+norm(c.name))+'|'+norm(c.unit);
     const r=m[k]=m[k]||{code:c.code,name:c.name,unit:c.unit,open:0,inQ:0,outQ:0,inV:0,outV:0};const s=i.dir==='in'?1:-1;
     if(i.date<from)r.open+=s*c.qty;else if(i.dir==='in'){r.inQ+=c.qty;r.inV+=c.amount}else{r.outQ+=c.qty;r.outV+=c.amount}}));
   return Object.values(m).map(r=>({...r,close:r.open+r.inQ-r.outQ})).sort((a,b)=>(a.code?0:1)-(b.code?0:1)||String(a.code).localeCompare(String(b.code))||a.name.localeCompare(b.name,'vi'))}
@@ -813,7 +889,7 @@ let autoRan=false;
 async function autoOnLoad(){if(autoRan||!canWrite())return;autoRan=true;await sleep(1500);try{await seedAccounts()}catch(e){console.error(e)}await loadPack();await processInbox();refresh()}
 
 /* ================= Khung ứng dụng ================= */
-const MENU=[['',[['dash','Tổng quan'],['warn','Cảnh báo']]],['Hóa đơn',[['hdin','Hóa đơn đầu vào'],['hdout','Hóa đơn đầu ra'],['danhmuc','Danh mục hàng hóa'],['mahang','Mã hàng'],['xnt','Xuất nhập tồn']]],['Ngân hàng',[['bankcty','Công ty'],['bankcn','Cá nhân'],['banktong','Tổng']]],['Khác',[['quotes','Báo giá'],['contracts','Hợp đồng'],['customers','Khách hàng'],['suppliers','Nhà cung cấp'],['team','Nhân sự']]]];
+const MENU=[['',[['dash','Tổng quan'],['warn','Cảnh báo']]],['Hóa đơn',[['hdin','Hóa đơn đầu vào'],['hdout','Hóa đơn đầu ra'],['danhmuc','Danh mục hàng hóa'],['chiphi','Hàng chi phí'],['mahang','Mã hàng'],['xnt','Xuất nhập tồn']]],['Ngân hàng',[['bankcty','Công ty'],['bankcn','Cá nhân'],['banktong','Tổng']]],['Khác',[['quotes','Báo giá'],['contracts','Hợp đồng'],['customers','Khách hàng'],['suppliers','Nhà cung cấp'],['team','Nhân sự']]]];
 function render(){
   const root=$('#root');if(!role)return;if(!VIEWS[view])view='dash';
   if(!$('.app',root))root.innerHTML=`<div class="app"><aside class="side"><div class="brand">Thi Đạt<small>Quản lý bán hàng</small></div><nav class="nav" id="nav" aria-label="Menu"></nav><div class="me" id="me"></div></aside><main class="main" id="main"><div class="prog" id="prog" style="display:none"></div><div class="head"><h1 id="ttl"></h1></div><div class="bar" id="bar"></div><div id="body"></div></main></div>`;

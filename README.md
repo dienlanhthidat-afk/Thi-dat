@@ -11,7 +11,7 @@ Báo giá và Hợp đồng là các mô-đun trống chờ dữ liệu thật. 
 | Menu | Nội dung |
 |---|---|
 | Tổng quan, Cảnh báo | Hóa đơn 2026, tiền vào/ra theo ngân hàng, thẻ cập nhật dữ liệu; công nợ khách hàng / NCC, thanh toán nghi trùng |
-| Hóa đơn | Đầu vào, Đầu ra (tab Tổng quát / Chi tiết), Danh mục hàng hóa (tạm, gom tên giống nhau từ HĐ đầu vào), Mã hàng, Xuất nhập tồn |
+| Hóa đơn | Đầu vào, Đầu ra (tab Tổng quát / Chi tiết), Danh mục hàng hóa (tạm, gom tên giống nhau từ HĐ đầu vào), Hàng chi phí (Be, Ahamove, Lalamove, Grab, ăn uống, điện thoại, xăng dầu, dịch vụ khác: không đưa vào thương mại), Mã hàng, Xuất nhập tồn |
 | Ngân hàng | Công ty, Cá nhân, Tổng |
 | Khác | Báo giá, Hợp đồng, Khách hàng, Nhà cung cấp, Nhân sự (bảng công lấy từ phần mềm Chấm Công Công Trình, kèm phân quyền) |
 
