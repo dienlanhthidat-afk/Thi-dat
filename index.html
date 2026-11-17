@@ -417,18 +417,92 @@ A.partyView=d=>{const m=M(),p=m.parties[d.id];if(!p)return;
 
 /* ================= HÓA ĐƠN ĐẦU VÀO / ĐẦU RA ================= */
 function invList(dir){const q=norm(st[view+'_q']||''),r=rng();
-  return arr(S.invoices).filter(i=>i.dir===dir&&inR(i.date,r)&&(st.showBad||!BADINV(i))&&(!q||norm(i.symbol+' '+i.no+' '+i.partyName+' '+i.mst+' '+(st.ivm==='ct'?invLines(i).map(x=>x.name).join(' '):'')).includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.no).localeCompare(String(a.no)))}
+  return arr(S.invoices).filter(i=>i.dir===dir&&inR(i.date,r)&&(st.showBad||!BADINV(i))&&(!q||norm(i.symbol+' '+i.no+' '+i.partyName+' '+i.mst+' '+Object.values(i.meta||{}).join(' ')+' '+(st.ivm==='ct'?invLines(i).map(x=>x.name).join(' '):'')).includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.no).localeCompare(String(a.no)))}
 const invBar=dir=>{const m=st.ivm||'tq';return `<div class="tabs"><button class="${m==='tq'?'on':''}" data-act="ivMode" data-id="tq">Tổng quát</button><button class="${m==='ct'?'on':''}" data-act="ivMode" data-id="ct">Chi tiết</button></div>${dateBar()}<input type="search" placeholder="Tìm số HĐ, tên, MST${m==='ct'?', hàng':''}" data-bind="${view}_q" value="${esc(st[view+'_q']||'')}"><label class="chk"><input type="checkbox" data-bind="showBad" ${st.showBad?'checked':''}> Hiện HĐ hủy, bị thay thế</label>${canWrite()?`<button class="btn" data-act="invImport" data-id="${dir}">Nạp hóa đơn (XML / Excel)</button>`:''}<button class="btn pri" data-act="invXlsx" data-id="${dir}">Xuất Excel</button>`};
+/* ---- Theo dõi hóa đơn: thanh toán theo ngân hàng, tạm ứng, hợp đồng, công trình, sale (chị sửa được) ---- */
+let payMemo={v:-1};
+function payAlloc(){ // phân bổ tiền ngân hàng đã khớp đối tác cho từng hóa đơn: ưu tiên số HĐ trong nội dung, còn lại trả hóa đơn cũ trước
+  if(payMemo.v===ver)return payMemo.r;const m=M(),r={};
+  const byP={};goodInv().forEach(i=>{const k=i.dir+'|'+partyKey(i);(byP[k]=byP[k]||[]).push(i);r[i.id]={paid:0,tx:[]}});
+  const txBy={};liveTx().forEach(t=>{const k=m.partyOf[t.id];if(!k)return;const dir=num(t.amount)>0?'out':'in';(txBy[dir+'|'+k]=txBy[dir+'|'+k]||[]).push(t)});
+  Object.entries(byP).forEach(([k,invs])=>{invs.sort((a,b)=>String(a.date).localeCompare(String(b.date)));const txs=(txBy[k]||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const left=i=>num(i.total)-r[i.id].paid;
+    txs.forEach(t=>{let amt=Math.abs(num(t.amount));const h=hdTok(t.desc);
+      if(h){const f=invs.find(i=>String(i.no).replace(/^0+/,'')===h);if(f){const x=Math.min(amt,Math.max(0,left(f)))||amt;r[f.id].paid+=x;r[f.id].tx.push({t,x});amt-=x}}
+      for(const i of invs){if(amt<=0.5)break;const x=Math.min(amt,left(i));if(x<=0.5)continue;r[i.id].paid+=x;r[i.id].tx.push({t,x});amt-=x}});});
+  payMemo={v:ver,r};return r;
+}
+const PAYST={auto:'Tự động theo ngân hàng',done:'Đã thanh toán',part:'Thanh toán một phần',adv:'Đã tạm ứng',none:'Chưa thanh toán'};
+function payOf(i){const a=payAlloc()[i.id]||{paid:0,tx:[]},mt=i.meta||{},adv=num(mt.adv),tot=num(i.total);
+  let st=mt.pay&&mt.pay!=='auto'?mt.pay:(a.paid>=tot-1000&&tot>0?'done':a.paid>0?'part':adv>0?'adv':'none');
+  return{paid:a.paid,tx:a.tx,adv,st,manual:!!(mt.pay&&mt.pay!=='auto')}}
+const payPill=p=>{const k={done:'good',part:'gold',adv:'acc',none:'bad'}[p.st];return `<span class="pill ${k}">${PAYST[p.st]}${p.manual?' ✎':''}</span>`};
+const metaVals=f=>[...new Set(arr(S.invoices).map(i=>(i.meta||{})[f]).filter(Boolean))];
+A.invMeta=d=>{const i=S.invoices[d.id];if(!i)return;if(!canWrite())return toast('Chỉ quản trị và kế toán được sửa','bad');const mt=i.meta||{},p=payOf(i);
+  const projs=[...new Set([...metaVals('project'),...arr(S.cc_projects).map(x=>x.name+(x.code?' · '+x.code:''))])].sort((a,b)=>a.localeCompare(b,'vi'));
+  const sales=[...new Set([...metaVals('sale'),...arr(S.cc_emps).filter(e=>e.name!=='Admin').map(e=>e.name)])].sort((a,b)=>a.localeCompare(b,'vi'));
+  modal({title:`Theo dõi HĐ ${esc(i.symbol||'')} ${esc(i.no)} · ${esc(i.partyName||'')}`,wide:true,body:`<p class="mute" style="margin-top:0">Tổng ${vnd(i.total)} đ · ngân hàng đã ${i.dir==='out'?'thu':'trả'} khớp với hóa đơn này: <b>${vnd(p.paid)} đ</b>${p.tx.length?' ('+p.tx.map(x=>dmy(x.t.date)+' '+accName(x.t.accountId)+' '+vnd(x.x)).join('; ')+')':''}</p>
+   <datalist id="dl_proj">${projs.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl_sale">${sales.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+   <div class="fg">${F('m_pay','Tình trạng thanh toán',mt.pay||'auto',{type:'select',opts:Object.entries(PAYST).map(([k,v])=>[k,k==='auto'?v+' (đang: '+PAYST[payOf({...i,meta:{...mt,pay:'auto'}}).st]+')':v])})}${F('m_adv','Số tiền tạm ứng (đ)',mt.adv||'',{type:'number'})}${F('m_advd','Ngày tạm ứng',mt.advDate||'',{type:'date'})}
+   ${F('m_ct','Hợp đồng',mt.contract||'',{type:'select',opts:[['','Chưa xác định'],['co','Đã có hợp đồng'],['chua','Chưa có hợp đồng'],['khong','Không cần hợp đồng']]})}${F('m_ctno','Số hợp đồng',mt.contractNo||'')}
+   ${F('m_proj','Công trình',mt.project||'',{attr:'list="dl_proj" autocomplete="off"'})}${F('m_sale',i.dir==='out'?'Sale phụ trách':'Người mua hàng / phụ trách',mt.sale||'',{attr:'list="dl_sale" autocomplete="off"'})}${F('m_note','Ghi chú',mt.note||'',{type:'area',cls:'full'})}</div>`,
+   async onOk(){const meta={pay:V('m_pay'),adv:num(V('m_adv'))||0,advDate:V('m_advd'),contract:V('m_ct'),contractNo:V('m_ctno'),project:V('m_proj'),sale:V('m_sale'),note:V('m_note'),by:me,at:new Date().toISOString()};
+     await patch('invoices',d.id,{meta});i.meta=meta;ver++;logAct('cập nhật theo dõi HĐ '+i.no);toast('Đã lưu')}});
+};
+/* ---- Nguồn hàng cho dòng hóa đơn đầu ra: HĐ đầu vào gần nhất hoặc hàng tồn ---- */
+let srcMemo={v:-1};
+function srcIndex(){ // gom dòng đầu vào theo mã hàng hoặc tên gần giống (≥85% ký tự, cùng con số, cùng loại phụ kiện)
+  if(srcMemo.v===ver)return srcMemo.r;const groups=[],byKey={},buckets={};
+  const gOf=(x)=>{const c=conv(x);if(c.code)return byKey['C:'+c.code]||(byKey['C:'+c.code]=groups.push({key:'C:'+c.code,ins:[],outs:[]})-1);
+    const cp=compact(x.name),tk=tokOf(x.name),nk=tk.filter(t=>/\d/.test(t)).sort().join(' ');if(byKey['N:'+cp+'|'+norm(x.unit)]!==undefined)return byKey['N:'+cp+'|'+norm(x.unit)];
+    const b=buckets[nk]=buckets[nk]||[];for(const e of b){if(sameKind(tk,e.tk)&&dice(cp,e.cp)>=.85){byKey['N:'+cp+'|'+norm(x.unit)]=e.g;return e.g}}
+    const g=groups.push({key:'N:'+cp,ins:[],outs:[]})-1;b.push({cp,tk,g});byKey['N:'+cp+'|'+norm(x.unit)]=g;return g};
+  goodInv('in').forEach(i=>invLines(i).forEach((x,k)=>{if(isCostLine(i,x))return;const c=conv(x);groups[gOf(x)].ins.push({i,x,k,date:i.date||'',q:c.qty,unit:c.unit})}));
+  const outMap={};goodInv('out').forEach(i=>invLines(i).forEach((x,k)=>{const c=conv(x),g=gOf(x);groups[g].outs.push({i,x,k,date:i.date||'',q:c.qty});outMap[i.id+'#'+k]=g}));
+  groups.forEach(g=>{g.ins.sort((a,b)=>a.date.localeCompare(b.date));g.outs.sort((a,b)=>a.date.localeCompare(b.date)||String(a.i.no).localeCompare(String(b.i.no)))});
+  srcMemo={v:ver,r:{groups,outMap}};return srcMemo.r;
+}
+function srcOf(i,k){ // {st:'in'|'later'|'none'|'note', last, stock}
+  const x=invLines(i)[k],note=(i.lineNotes||{})[k];const R=srcIndex(),g=R.groups[R.outMap[i.id+'#'+k]];
+  if(!g)return{st:'none',note};const d=i.date||'';
+  const before=g.ins.filter(e=>e.date<=d),last=before[before.length-1];
+  let stock=sum(before,e=>e.q);for(const o of g.outs){if(o.i.id===i.id&&o.k===k)break;if(o.date<=d)stock-=o.q}
+  if(note)return{st:'note',note,last,stock};
+  if(last)return{st:'in',last,stock,need:conv(x).qty};
+  const later=g.ins.find(e=>e.date>d);return later?{st:'later',last:later}:{st:'none'};
+}
+function srcCell(i,k){const s=srcOf(i,k),L=s.last;
+  const ref=L?`HĐ vào <b>${esc(L.i.no)}</b> ngày ${dmy(L.i.date)} · ${esc((L.i.partyName||'').slice(0,40))} · giá ${vnd(L.x.price)}/${esc(L.x.unit||'')}`:'';
+  const edit=canWrite()?` <button class="btn sm" data-act="lnNote" data-id="${i.id}" data-ln="${k}">${s.note?'Sửa ghi chú':'Ghi chú'}</button>`:'';
+  if(s.st==='note')return `<span class="pill acc">Đã ghi chú</span> ${esc(s.note)}${edit}`;
+  if(s.st==='in'){const short=s.stock+1e-6<s.need;return `${ref}<br><span class="mute">Tồn trước khi bán: ${qf(s.stock)} ${esc(L.unit||'')}</span>${short?' <span class="pill gold">Tồn không đủ</span>':' <span class="pill good">Có hàng tồn</span>'}${edit}`}
+  if(s.st==='later')return `<span class="pill bad">Chưa có đầu vào trước ngày bán</span><br><span class="mute">${ref.replace('HĐ vào','Có HĐ vào sau:')}</span>${edit}`;
+  return `<span class="pill bad">Không có hóa đơn đầu vào</span>${edit}`}
+A.lnNote=d=>{const i=S.invoices[d.id],x=i&&invLines(i)[+d.ln];if(!x)return;const cur=(i.lineNotes||{})[d.ln]||'';
+  modal({title:'Ghi chú nguồn hàng',body:`<p class="mute" style="margin-top:0"><b>${esc(x.name)}</b> · ${qf(x.qty)} ${esc(x.unit||'')} · HĐ ra ${esc(i.no)} ngày ${dmy(i.date)}</p>${F('ln_note','Nguồn hàng / ghi chú (VD: hàng tồn cũ trước 2026, mua lẻ không hóa đơn, nhân công tự làm…)',cur,{type:'area',cls:'full'})}<p class="mute" style="font-size:12.5px">Dòng có ghi chú sẽ không còn tô vàng. Xóa trắng để bỏ ghi chú.</p>`,
+   async onOk(){const ln={...(i.lineNotes||{})};const v=V('ln_note');if(v)ln[d.ln]=v;else delete ln[d.ln];await patch('invoices',d.id,{lineNotes:ln});i.lineNotes=ln;ver++;logAct('ghi chú nguồn hàng HĐ '+i.no);toast('Đã lưu')}});
+};
 function invBody(dir){
   const isIn=dir==='in',l=invList(dir),ok=l.filter(i=>!BADINV(i)),bad=arr(S.invoices).filter(i=>i.dir===dir&&BADINV(i)&&inR(i.date,rng())).length,nol=ok.filter(i=>!invLines(i).length).length;
-  const tiles=`<div class="tiles"><div class="card tile"><div class="l">Số hóa đơn</div><div class="v">${ok.length}</div><div class="s">${bad?bad+' HĐ hủy / bị thay thế không tính':'Đã bỏ HĐ hủy, bị thay thế'}</div></div><div class="card tile"><div class="l">Tiền hàng chưa thuế</div><div class="v">${vnd(sum(ok,i=>i.net))} đ</div></div><div class="card tile"><div class="l">Thuế GTGT</div><div class="v">${vnd(sum(ok,i=>i.vat))} đ</div></div><div class="card tile"><div class="l">Tổng thanh toán</div><div class="v">${vnd(sum(ok,i=>i.total))} đ</div>${nol?`<div class="s">${nol} HĐ chưa có chi tiết hàng</div>`:''}</div></div>`;
-  if((st.ivm||'tq')==='tq')return tiles+table([['Ngày'],['Ký hiệu'],['Số HĐ'],[isIn?'Người bán':'Người mua','w'],['MST'],['Chưa thuế','r'],['Thuế','r'],['Tổng','r'],['Dòng hàng','r'],['Trạng thái'],...(isIn?[['Loại']]:[])],
-    l.map(i=>({act:'invView',id:i.id,cls:BADINV(i)?'dim':'',c:[`<span class="nw">${dmy(i.date)}</span>`,esc(i.symbol||''),esc(i.no),esc(i.partyName||''),esc(i.mst||''),vnd(i.net),vnd(i.vat),vnd(i.total),invLines(i).length||'<span class="mute">—</span>',BADINV(i)?pill(i.status||'Hủy','bad'):pill('Hợp lệ','good'),...(isIn?[(()=>{const c=invCost(i);return c.amt?(c.all?`<span class="pill warn">Chi phí · ${esc(c.cat)}</span>`:`<span class="pill gold">Một phần chi phí</span>`):'<span class="pill acc">Thương mại</span>'})()]:[])]})),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});
+  const ps=ok.map(payOf),unpaid=ok.filter((i,k)=>ps[k].st!=='done');
+  const tiles=`<div class="tiles"><div class="card tile"><div class="l">Số hóa đơn</div><div class="v">${ok.length}</div><div class="s">${bad?bad+' HĐ hủy / bị thay thế không tính':'Đã bỏ HĐ hủy, bị thay thế'}</div></div><div class="card tile"><div class="l">Tổng thanh toán</div><div class="v">${vnd(sum(ok,i=>i.total))} đ</div><div class="s">thuế ${vnd(sum(ok,i=>i.vat))} đ${nol?' · '+nol+' HĐ chưa có chi tiết':''}</div></div><div class="card tile"><div class="l">${isIn?'Đã trả':'Đã thu'} qua ngân hàng</div><div class="v">${vnd(sum(ps,p=>p.paid))} đ</div></div><div class="card tile"><div class="l">${isIn?'Còn phải trả':'Còn phải thu'}</div><div class="v ${unpaid.length?'neg':''}">${vnd(ok.reduce((t,i,k)=>t+(ps[k].st==='done'?0:Math.max(0,num(i.total)-ps[k].paid-ps[k].adv)),0))} đ</div><div class="s">${unpaid.length} HĐ chưa thanh toán đủ</div></div></div>`;
+  if((st.ivm||'tq')==='tq'){const mt=i=>i.meta||{};
+    return tiles+`<div class="note">${pill('Theo dõi','acc')}<span>Cột <b>Thanh toán</b> tự tính từ tiền ngân hàng đã khớp với ${isIn?'nhà cung cấp':'khách hàng'} (ưu tiên giao dịch ghi số hóa đơn, còn lại trả hóa đơn cũ trước). Bấm <b>Sửa</b> ở cột đầu để ghi tạm ứng, hợp đồng, công trình, ${isIn?'người phụ trách':'sale'} và ghi chú; chị đổi được cả tình trạng thanh toán (có dấu ✎).</span></div>`+
+    table([['Sửa'],['Ngày'],['Ký hiệu · Số'],[isIn?'Người bán':'Người mua','w'],['Tổng','r'],[isIn?'Đã trả (NH)':'Đã thu (NH)','r'],['Thanh toán'],['Tạm ứng','r'],['Hợp đồng'],['Công trình','w'],[isIn?'Phụ trách':'Sale'],['Ghi chú','w'],...(isIn?[['Loại']]:[])],
+    l.map(i=>{const p=payOf(i),m=mt(i);return{act:'invView',id:i.id,cls:BADINV(i)?'dim':'',c:[canWrite()?`<button class="btn sm" data-act="invMeta" data-id="${i.id}">Sửa</button>`:'',`<span class="nw">${dmy(i.date)}</span>`,`<span class="nw">${esc(i.symbol||'')}</span><br><b>${esc(i.no)}</b>`,esc(i.partyName||'')+(i.mst?`<br><span class="mute">${esc(i.mst)}</span>`:''),vnd(i.total),p.paid?vnd(p.paid):'',BADINV(i)?pill(i.status||'Hủy','bad'):payPill(p),p.adv?vnd(p.adv)+(m.advDate?`<br><span class="mute">${dmy(m.advDate)}</span>`:''):'',
+      m.contract==='co'?pill('Có','good')+(m.contractNo?' '+esc(m.contractNo):''):m.contract==='chua'?pill('Chưa có','warn'):m.contract==='khong'?pill('Không cần'):(num(i.total)>=2e7?'<span class="pill warn" title="Hóa đơn từ 20 triệu">Chưa ghi</span>':'<span class="mute">—</span>'),esc(m.project||''),esc(m.sale||''),esc(m.note||''),
+      ...(isIn?[(()=>{const c=invCost(i);return c.amt?(c.all?`<span class="pill warn">Chi phí · ${esc(c.cat)}</span>`:`<span class="pill gold">Một phần chi phí</span>`):'<span class="pill acc">Thương mại</span>'})()]:[])]}}),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});}
   const rows=[];ok.forEach(i=>invLines(i).forEach((x,k)=>rows.push({i,x,k})));
-  const unm=rows.filter(r=>!cvOf(r.x.name,r.x.unit)).length;
-  return tiles+(unm?`<div class="note">${pill('Cần gán mã','warn')}<span><b>${unm}</b> dòng hàng chưa gán mã. Bấm <b>Quy đổi</b> ở cột đầu để chọn mã hàng, đơn vị đích và hệ số. Gán một lần là mọi hóa đơn cùng tên, cùng đơn vị đều theo.</span></div>`:'')+
-   table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã hàng · quy đổi'],...(isIn?[['Chi phí / thương mại']]:[]),['Ngày'],['Số HĐ'],[isIn?'Người bán':'Người mua','w']],
-   rows.map(({i,x,k})=>{const c=conv(x),cc=isIn?costOf(i,x):null;return{cls:cc&&cc.cp?'dim':'',c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code||'—')}</b> ${qf(c.qty)} ${esc(c.unit)}${c.f!==1?` <span class="mute">(×${qf(c.f)})</span>`:''}`:'<span class="mute">Chưa gán</span>',...(isIn?[costPill(cc)+(canWrite()?` <button class="btn sm" data-act="cpLine" data-id="${i.id}" data-ln="${k}">Đổi</button>`:'')]:[]),`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:'Chưa có dòng hàng nào trong khoảng ngày này. Chi tiết hàng lấy từ file XML hóa đơn hoặc file chi tiết trong thư mục Thi Đạt.'});
+  if(isIn){const unm=rows.filter(r=>!cvOf(r.x.name,r.x.unit)&&!isCostLine(r.i,r.x)).length;
+   return tiles+(unm?`<div class="note">${pill('Cần gán mã','warn')}<span><b>${unm}</b> dòng hàng thương mại chưa gán mã. Bấm <b>Quy đổi</b> ở cột đầu để chọn mã hàng, đơn vị đích và hệ số.</span></div>`:'')+
+   table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Mã hàng · quy đổi'],['Chi phí / thương mại'],['Ngày'],['Số HĐ'],['Người bán','w']],
+   rows.map(({i,x,k})=>{const c=conv(x),cc=costOf(i,x);return{cls:cc.cp?'dim':'',c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code||'—')}</b> ${qf(c.qty)} ${esc(c.unit)}${c.f!==1?` <span class="mute">(×${qf(c.f)})</span>`:''}`:'<span class="mute">Chưa gán</span>',costPill(cc)+(canWrite()?` <button class="btn sm" data-act="cpLine" data-id="${i.id}" data-ln="${k}">Đổi</button>`:''),`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:'Chưa có dòng hàng nào trong khoảng ngày này.'})}
+  const S2=rows.map(r=>({...r,s:srcOf(r.i,r.k)})),miss=S2.filter(r=>r.s.st==='none'||r.s.st==='later');
+  const shown=st.srcMiss?miss:S2;
+  return tiles+`<div class="note">${pill('Nguồn hàng','acc')}<span>Mỗi dòng bán ra được đối chiếu với <b>hóa đơn đầu vào gần nhất</b> của cùng mặt hàng (cùng mã hàng, hoặc tên giống từ 85%) trước ngày bán, kèm <b>tồn trước khi bán</b>. Dòng <b style="background:var(--warn-soft);padding:0 4px;border-radius:4px">tô vàng</b> là chưa có hóa đơn đầu vào: <b>${miss.length}</b>/${S2.length} dòng. Bấm <b>Ghi chú</b> để ghi nguồn (hàng tồn cũ, mua lẻ, nhân công…).</span></div>
+   <div class="bar"><label class="chk"><input type="checkbox" data-bind="srcMiss" ${st.srcMiss?'checked':''}> Chỉ hiện dòng chưa có đầu vào</label></div>`+
+   table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Nguồn hàng (HĐ đầu vào gần nhất / hàng tồn)','w2'],['Ngày'],['Số HĐ'],['Người mua','w']],
+   shown.map(({i,x,k,s})=>{const c=conv(x);return{cls:s.st==='none'||s.st==='later'?'hl':'',c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name)+(c.cv?`<br><span class="mute">${esc(c.code)} · ${qf(c.qty)} ${esc(c.unit)}</span>`:''),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),srcCell(i,k),`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:st.srcMiss?'Mọi dòng bán ra đều đã có hóa đơn đầu vào hoặc ghi chú.':'Chưa có dòng hàng nào trong khoảng ngày này.'});
 }
 VIEWS.hdin={title:'Hóa đơn đầu vào',bar:()=>invBar('in'),body:()=>invBody('in')};
 VIEWS.hdout={title:'Hóa đơn đầu ra',bar:()=>invBar('out'),body:()=>invBody('out')};
@@ -443,8 +517,9 @@ A.invView=d=>{const i=S.invoices[d.id];if(!i)return;const isIn=i.dir==='in';
 };
 A.invXlsx=d=>{const dir=d.id,isIn=dir==='in',[f,t]=rng();
   const all=goodInv(dir).filter(i=>inR(i.date,[f,t])).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  const tq=l=>l.map(i=>({'Ngày':i.date,'Ký hiệu':i.symbol,'Số HĐ':i.no,[isIn?'Người bán':'Người mua']:i.partyName,'MST':i.mst,'Chưa thuế':num(i.net),'Thuế':num(i.vat),'Tổng':num(i.total),'Trạng thái':i.status||''}));
-  const ct=l=>{const r=[];l.forEach(i=>invLines(i).forEach(x=>{const c=conv(x);r.push({'Ngày':i.date,'Ký hiệu':i.symbol,'Số HĐ':i.no,[isIn?'Người bán':'Người mua']:i.partyName,'MST':i.mst,'Hàng hóa':x.name,'ĐVT':x.unit,'SL':num(x.qty),'Đơn giá':num(x.price),'Thành tiền':num(x.amount)||num(x.qty)*num(x.price),'Mã hàng':c.code,'Tên mã hàng':c.cv?c.name:'','SL quy đổi':c.cv?+c.qty.toFixed(4):'','ĐVT quy đổi':c.cv?c.unit:''})}));return r};
+  const CTL={co:'Có',chua:'Chưa có',khong:'Không cần'};
+  const tq=l=>l.map(i=>{const p=payOf(i),m=i.meta||{};return{'Ngày':i.date,'Ký hiệu':i.symbol,'Số HĐ':i.no,[isIn?'Người bán':'Người mua']:i.partyName,'MST':i.mst,'Chưa thuế':num(i.net),'Thuế':num(i.vat),'Tổng':num(i.total),[isIn?'Đã trả qua NH':'Đã thu qua NH']:Math.round(p.paid),'Tình trạng thanh toán':PAYST[p.st],'Tạm ứng':p.adv||'','Ngày tạm ứng':m.advDate||'','Hợp đồng':CTL[m.contract]||'','Số hợp đồng':m.contractNo||'','Công trình':m.project||'',[isIn?'Phụ trách':'Sale']:m.sale||'','Ghi chú':m.note||''}});
+  const ct=l=>{const r=[];l.forEach(i=>invLines(i).forEach(x=>{const c=conv(x);r.push({'Ngày':i.date,'Ký hiệu':i.symbol,'Số HĐ':i.no,[isIn?'Người bán':'Người mua']:i.partyName,'MST':i.mst,'Hàng hóa':x.name,'ĐVT':x.unit,'SL':num(x.qty),'Đơn giá':num(x.price),'Thành tiền':num(x.amount)||num(x.qty)*num(x.price),'Mã hàng':c.code,'Tên mã hàng':c.cv?c.name:'','SL quy đổi':c.cv?+c.qty.toFixed(4):'','ĐVT quy đổi':c.cv?c.unit:'',...(isIn?{}:(()=>{const s=srcOf(i,invLines(i).indexOf(x)),L=s.last;return{'Nguồn hàng':s.st==='note'?'Ghi chú: '+s.note:s.st==='in'?'HĐ vào '+L.i.no+' ngày '+L.i.date+' - '+L.i.partyName:s.st==='later'?'Chưa có đầu vào trước ngày bán':'Không có hóa đơn đầu vào','Giá nhập gần nhất':L?num(L.x.price):'','Tồn trước khi bán':s.st==='in'?+s.stock.toFixed(3):''}})())})}));return r};
   const sh={'Tổng quát':tq(all),'Chi tiết cả năm':ct(all)};const by={};all.forEach(i=>{const k=(i.date||'').slice(0,7);(by[k]=by[k]||[]).push(i)});
   Object.keys(by).sort().forEach(k=>{const mm=k.slice(5,7);sh['T'+mm+' tổng quát']=tq(by[k]);sh['T'+mm+' chi tiết']=ct(by[k])});
   exportXlsx(`hoa-don-dau-${isIn?'vao':'ra'}-${f}-${t}.xlsx`,sh)};
