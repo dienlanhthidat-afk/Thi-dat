@@ -11,9 +11,9 @@ Báo giá, Hợp đồng, Khách hàng - NCC, Nhân sự là các mô-đun trố
 | Menu | Nội dung |
 |---|---|
 | Tổng quan, Cảnh báo | Hóa đơn 2026, tiền vào/ra theo ngân hàng, thẻ cập nhật dữ liệu; công nợ khách hàng / NCC, thanh toán nghi trùng |
-| Hóa đơn | Đầu vào, Đầu ra (tab Tổng quát / Chi tiết), Mã hàng, Xuất nhập tồn |
+| Hóa đơn | Đầu vào, Đầu ra (tab Tổng quát / Chi tiết), Danh mục hàng hóa (tạm, gom tên giống nhau từ HĐ đầu vào), Mã hàng, Xuất nhập tồn |
 | Ngân hàng | Công ty, Cá nhân, Tổng |
-| Khác | Báo giá, Hợp đồng, Khách hàng - NCC, Nhân sự (kèm phân quyền) |
+| Khác | Báo giá, Hợp đồng, Khách hàng, Nhà cung cấp, Nhân sự (bảng công lấy từ phần mềm Chấm Công Công Trình, kèm phân quyền) |
 
 ## Quy tắc dữ liệu
 
