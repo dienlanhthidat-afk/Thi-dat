@@ -81,6 +81,7 @@ tbody tr.dim td{opacity:.5}
 tbody tr.hl td{background:var(--warn-soft)}
 .r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nw{white-space:nowrap}
+.ie{padding:4px 7px;font-size:13px;border-radius:7px;min-width:110px;width:100%;margin:2px 0}textarea.ie{min-height:38px;min-width:170px}select.ie{width:auto;max-width:190px}.ie.saved{border-color:var(--good);box-shadow:0 0 0 2px var(--good-soft)}
 td.w{min-width:230px}td.w2{min-width:300px}
 .pill{display:inline-block;border-radius:10px;padding:0 9px;font-size:12px;line-height:20px;font-weight:600;background:var(--soft);color:var(--mute);white-space:nowrap}
 .pill.good{background:var(--good-soft);color:var(--good)}
@@ -438,6 +439,16 @@ function payOf(i){const a=payAlloc()[i.id]||{paid:0,tx:[]},mt=i.meta||{},adv=num
   return{paid:a.paid,tx:a.tx,adv,st,manual:!!(mt.pay&&mt.pay!=='auto')}}
 const payPill=p=>{const k={done:'good',part:'gold',adv:'acc',none:'bad'}[p.st];return `<span class="pill ${k}">${PAYST[p.st]}${p.manual?' ✎':''}</span>`};
 const metaVals=f=>[...new Set(arr(S.invoices).map(i=>(i.meta||{})[f]).filter(Boolean))];
+let metaPending=false;
+document.addEventListener('change',async e=>{const t=e.target;const f=t.dataset&&t.dataset.meta;if(!f||!t.classList.contains('ie'))return;
+  const i=S.invoices[t.dataset.id];if(!i||!canWrite())return;let v=t.value.trim();if(f==='adv')v=num(v)||0;
+  const meta={...(i.meta||{}),[f]:v,by:me,at:new Date().toISOString()};
+  try{await patch('invoices',t.dataset.id,{meta});i.meta=meta;ver++;t.classList.add('saved');setTimeout(()=>t.classList.remove('saved'),1200);toast('Đã lưu');if(f==='pay'||f==='adv'||f==='contract')setTimeout(()=>{if(!(document.activeElement&&document.activeElement.classList.contains('ie')))refresh()},400)}
+  catch(err){toast('Không lưu được: '+(err.message||err.code),'bad')}});
+document.addEventListener('change',async e=>{const t=e.target;if(!t.dataset||t.dataset.lnote===undefined||!canWrite())return;const i=S.invoices[t.dataset.id];if(!i)return;
+  const ln={...(i.lineNotes||{})};const v=t.value.trim();if(v)ln[t.dataset.lnote]=v;else delete ln[t.dataset.lnote];
+  try{await patch('invoices',t.dataset.id,{lineNotes:ln});i.lineNotes=ln;ver++;t.classList.add('saved');setTimeout(()=>t.classList.remove('saved'),1200);toast('Đã lưu ghi chú');metaPending=true}catch(err){toast('Không lưu được: '+(err.message||err.code),'bad')}});
+document.addEventListener('focusout',e=>{if(e.target.classList&&e.target.classList.contains('ie')&&metaPending)setTimeout(()=>{if(!(document.activeElement&&document.activeElement.classList.contains('ie'))){metaPending=false;refresh()}},300)});
 A.invMeta=d=>{const i=S.invoices[d.id];if(!i)return;if(!canWrite())return toast('Chỉ quản trị và kế toán được sửa','bad');const mt=i.meta||{},p=payOf(i);
   const projs=[...new Set([...metaVals('project'),...arr(S.cc_projects).map(x=>x.name+(x.code?' · '+x.code:''))])].sort((a,b)=>a.localeCompare(b,'vi'));
   const sales=[...new Set([...metaVals('sale'),...arr(S.cc_emps).filter(e=>e.name!=='Admin').map(e=>e.name)])].sort((a,b)=>a.localeCompare(b,'vi'));
@@ -473,8 +484,8 @@ function srcOf(i,k){ // {st:'in'|'later'|'none'|'note', last, stock}
 }
 function srcCell(i,k){const s=srcOf(i,k),L=s.last;
   const ref=L?`HĐ vào <b>${esc(L.i.no)}</b> ngày ${dmy(L.i.date)} · ${esc((L.i.partyName||'').slice(0,40))} · giá ${vnd(L.x.price)}/${esc(L.x.unit||'')}`:'';
-  const edit=canWrite()?` <button class="btn sm" data-act="lnNote" data-id="${i.id}" data-ln="${k}">${s.note?'Sửa ghi chú':'Ghi chú'}</button>`:'';
-  if(s.st==='note')return `<span class="pill acc">Đã ghi chú</span> ${esc(s.note)}${edit}`;
+  const edit=canWrite()?`<br><textarea class="ie" data-lnote="${k}" data-id="${i.id}" rows="1" placeholder="Ghi chú nguồn hàng (hàng tồn cũ, mua lẻ, nhân công…)">${esc(s.note||'')}</textarea>`:'';
+  if(s.st==='note')return `<span class="pill acc">Đã ghi chú nguồn</span>${L?' <span class="mute">'+ref+'</span>':''}${canWrite()?edit:' '+esc(s.note)}`;
   if(s.st==='in'){const short=s.stock+1e-6<s.need;return `${ref}<br><span class="mute">Tồn trước khi bán: ${qf(s.stock)} ${esc(L.unit||'')}</span>${short?' <span class="pill gold">Tồn không đủ</span>':' <span class="pill good">Có hàng tồn</span>'}${edit}`}
   if(s.st==='later')return `<span class="pill bad">Chưa có đầu vào trước ngày bán</span><br><span class="mute">${ref.replace('HĐ vào','Có HĐ vào sau:')}</span>${edit}`;
   return `<span class="pill bad">Không có hóa đơn đầu vào</span>${edit}`}
@@ -487,11 +498,22 @@ function invBody(dir){
   const ps=ok.map(payOf),unpaid=ok.filter((i,k)=>ps[k].st!=='done');
   const tiles=`<div class="tiles"><div class="card tile"><div class="l">Số hóa đơn</div><div class="v">${ok.length}</div><div class="s">${bad?bad+' HĐ hủy / bị thay thế không tính':'Đã bỏ HĐ hủy, bị thay thế'}</div></div><div class="card tile"><div class="l">Tổng thanh toán</div><div class="v">${vnd(sum(ok,i=>i.total))} đ</div><div class="s">thuế ${vnd(sum(ok,i=>i.vat))} đ${nol?' · '+nol+' HĐ chưa có chi tiết':''}</div></div><div class="card tile"><div class="l">${isIn?'Đã trả':'Đã thu'} qua ngân hàng</div><div class="v">${vnd(sum(ps,p=>p.paid))} đ</div></div><div class="card tile"><div class="l">${isIn?'Còn phải trả':'Còn phải thu'}</div><div class="v ${unpaid.length?'neg':''}">${vnd(ok.reduce((t,i,k)=>t+(ps[k].st==='done'?0:Math.max(0,num(i.total)-ps[k].paid-ps[k].adv)),0))} đ</div><div class="s">${unpaid.length} HĐ chưa thanh toán đủ</div></div></div>`;
   if((st.ivm||'tq')==='tq'){const mt=i=>i.meta||{};
-    return tiles+`<div class="note">${pill('Theo dõi','acc')}<span>Cột <b>Thanh toán</b> tự tính từ tiền ngân hàng đã khớp với ${isIn?'nhà cung cấp':'khách hàng'} (ưu tiên giao dịch ghi số hóa đơn, còn lại trả hóa đơn cũ trước). Bấm <b>Sửa</b> ở cột đầu để ghi tạm ứng, hợp đồng, công trình, ${isIn?'người phụ trách':'sale'} và ghi chú; chị đổi được cả tình trạng thanh toán (có dấu ✎).</span></div>`+
-    table([['Sửa'],['Ngày'],['Ký hiệu · Số'],[isIn?'Người bán':'Người mua','w'],['Tổng','r'],[isIn?'Đã trả (NH)':'Đã thu (NH)','r'],['Thanh toán'],['Tạm ứng','r'],['Hợp đồng'],['Công trình','w'],[isIn?'Phụ trách':'Sale'],['Ghi chú','w'],...(isIn?[['Loại']]:[])],
-    l.map(i=>{const p=payOf(i),m=mt(i);return{act:'invView',id:i.id,cls:BADINV(i)?'dim':'',c:[canWrite()?`<button class="btn sm" data-act="invMeta" data-id="${i.id}">Sửa</button>`:'',`<span class="nw">${dmy(i.date)}</span>`,`<span class="nw">${esc(i.symbol||'')}</span><br><b>${esc(i.no)}</b>`,esc(i.partyName||'')+(i.mst?`<br><span class="mute">${esc(i.mst)}</span>`:''),vnd(i.total),p.paid?vnd(p.paid):'',BADINV(i)?pill(i.status||'Hủy','bad'):payPill(p),p.adv?vnd(p.adv)+(m.advDate?`<br><span class="mute">${dmy(m.advDate)}</span>`:''):'',
-      m.contract==='co'?pill('Có','good')+(m.contractNo?' '+esc(m.contractNo):''):m.contract==='chua'?pill('Chưa có','warn'):m.contract==='khong'?pill('Không cần'):(num(i.total)>=2e7?'<span class="pill warn" title="Hóa đơn từ 20 triệu">Chưa ghi</span>':'<span class="mute">—</span>'),esc(m.project||''),esc(m.sale||''),esc(m.note||''),
-      ...(isIn?[(()=>{const c=invCost(i);return c.amt?(c.all?`<span class="pill warn">Chi phí · ${esc(c.cat)}</span>`:`<span class="pill gold">Một phần chi phí</span>`):'<span class="pill acc">Thương mại</span>'})()]:[])]}}),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});}
+    const W=canWrite(),projs=[...new Set([...metaVals('project'),...arr(S.cc_projects).map(x=>x.name+(x.code?' · '+x.code:''))])].sort((a,b)=>a.localeCompare(b,'vi')),sales=[...new Set([...metaVals('sale'),...arr(S.cc_emps).filter(e=>e.name!=='Admin').map(e=>e.name)])].sort((a,b)=>a.localeCompare(b,'vi'));
+    const ie=(i,f,v,attr='')=>`<input class="ie" data-meta="${f}" data-id="${i.id}" value="${esc(v??'')}" ${attr}>`;
+    const sel=(i,f,v,opts)=>`<select class="ie" data-meta="${f}" data-id="${i.id}">${opts.map(([k,t])=>`<option value="${k}"${String(v||'')===k?' selected':''}>${esc(t)}</option>`).join('')}</select>`;
+    const ctOpts=[['','— Chưa ghi —'],['co','Có hợp đồng'],['chua','Chưa có'],['khong','Không cần']];
+    return tiles+`<div class="note">${pill('Sửa trực tiếp','acc')}<span>${W?`Các cột <b>Thanh toán, Tạm ứng, Hợp đồng, Công trình, ${isIn?'Phụ trách':'Sale'}, Ghi chú</b> sửa ngay trên bảng: gõ hoặc chọn xong là <b>tự lưu</b>. `:''}Thanh toán mặc định tự tính từ tiền ngân hàng đã khớp với ${isIn?'nhà cung cấp':'khách hàng'}; chị chọn tình trạng khác thì có dấu ✎.</span></div>
+    <datalist id="dl_proj">${projs.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl_sale">${sales.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`+
+    table([['Ngày'],['Ký hiệu · Số'],[isIn?'Người bán':'Người mua','w'],['Tổng','r'],[isIn?'Đã trả (NH)':'Đã thu (NH)','r'],['Thanh toán'],['Tạm ứng (đ)'],['Hợp đồng'],['Công trình','w'],[isIn?'Phụ trách':'Sale'],['Ghi chú','w'],...(isIn?[['Loại']]:[]),['']],
+    l.map(i=>{const p=payOf(i),m=mt(i),autoSt=payOf({...i,meta:{...m,pay:'auto'}}).st;return{cls:BADINV(i)?'dim':'',c:[`<span class="nw">${dmy(i.date)}</span>`,`<span class="nw">${esc(i.symbol||'')}</span><br><b>${esc(i.no)}</b>`,esc(i.partyName||'')+(i.mst?`<br><span class="mute">${esc(i.mst)}</span>`:''),vnd(i.total),p.paid?vnd(p.paid):'',
+      BADINV(i)?pill(i.status||'Hủy','bad'):payPill(p)+(W?'<br>'+sel(i,'pay',m.pay||'auto',Object.entries(PAYST).map(([k,v])=>[k,k==='auto'?'Tự động ('+PAYST[autoSt].toLowerCase()+')':v])):''),
+      W?ie(i,'adv',m.adv||'','type="number" placeholder="0" style="width:120px"')+'<br>'+ie(i,'advDate',m.advDate||'','type="date" style="width:140px"'):(p.adv?vnd(p.adv)+(m.advDate?`<br><span class="mute">${dmy(m.advDate)}</span>`:''):''),
+      W?sel(i,'contract',m.contract,ctOpts)+'<br>'+ie(i,'contractNo',m.contractNo,'placeholder="Số hợp đồng" style="width:140px"')+(!m.contract&&num(i.total)>=2e7?' <span class="pill warn" title="Hóa đơn từ 20 triệu">Chưa ghi</span>':''):(m.contract==='co'?pill('Có','good')+(m.contractNo?' '+esc(m.contractNo):''):m.contract==='chua'?pill('Chưa có','warn'):m.contract==='khong'?pill('Không cần'):(num(i.total)>=2e7?'<span class="pill warn">Chưa ghi</span>':'<span class="mute">—</span>')),
+      W?ie(i,'project',m.project,'list="dl_proj" placeholder="Công trình" autocomplete="off"'):esc(m.project||''),
+      W?ie(i,'sale',m.sale,'list="dl_sale" placeholder="'+(isIn?'Phụ trách':'Sale')+'" autocomplete="off" style="width:140px"'):esc(m.sale||''),
+      W?`<textarea class="ie" data-meta="note" data-id="${i.id}" rows="2" placeholder="Ghi chú">${esc(m.note||'')}</textarea>`:esc(m.note||''),
+      ...(isIn?[(()=>{const c=invCost(i);return c.amt?(c.all?`<span class="pill warn">Chi phí · ${esc(c.cat)}</span>`:`<span class="pill gold">Một phần chi phí</span>`):'<span class="pill acc">Thương mại</span>'})()]:[]),
+      `<button class="btn sm" data-act="invView" data-id="${i.id}">Xem HĐ</button>`]}}),{empty:'Chưa có hóa đơn trong khoảng ngày này.'});}
   const rows=[];ok.forEach(i=>invLines(i).forEach((x,k)=>rows.push({i,x,k})));
   if(isIn){const unm=rows.filter(r=>!cvOf(r.x.name,r.x.unit)&&!isCostLine(r.i,r.x)).length;
    return tiles+(unm?`<div class="note">${pill('Cần gán mã','warn')}<span><b>${unm}</b> dòng hàng thương mại chưa gán mã. Bấm <b>Quy đổi</b> ở cột đầu để chọn mã hàng, đơn vị đích và hệ số.</span></div>`:'')+
@@ -499,7 +521,7 @@ function invBody(dir){
    rows.map(({i,x,k})=>{const c=conv(x),cc=costOf(i,x);return{cls:cc.cp?'dim':'',c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),c.cv?`<b>${esc(c.code||'—')}</b> ${qf(c.qty)} ${esc(c.unit)}${c.f!==1?` <span class="mute">(×${qf(c.f)})</span>`:''}`:'<span class="mute">Chưa gán</span>',costPill(cc)+(canWrite()?` <button class="btn sm" data-act="cpLine" data-id="${i.id}" data-ln="${k}">Đổi</button>`:''),`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:'Chưa có dòng hàng nào trong khoảng ngày này.'})}
   const S2=rows.map(r=>({...r,s:srcOf(r.i,r.k)})),miss=S2.filter(r=>r.s.st==='none'||r.s.st==='later');
   const shown=st.srcMiss?miss:S2;
-  return tiles+`<div class="note">${pill('Nguồn hàng','acc')}<span>Mỗi dòng bán ra được đối chiếu với <b>hóa đơn đầu vào gần nhất</b> của cùng mặt hàng (cùng mã hàng, hoặc tên giống từ 85%) trước ngày bán, kèm <b>tồn trước khi bán</b>. Dòng <b style="background:var(--warn-soft);padding:0 4px;border-radius:4px">tô vàng</b> là chưa có hóa đơn đầu vào: <b>${miss.length}</b>/${S2.length} dòng. Bấm <b>Ghi chú</b> để ghi nguồn (hàng tồn cũ, mua lẻ, nhân công…).</span></div>
+  return tiles+`<div class="note">${pill('Nguồn hàng','acc')}<span>Mỗi dòng bán ra được đối chiếu với <b>hóa đơn đầu vào gần nhất</b> của cùng mặt hàng (cùng mã hàng, hoặc tên giống từ 85%) trước ngày bán, kèm <b>tồn trước khi bán</b>. Dòng <b style="background:var(--warn-soft);padding:0 4px;border-radius:4px">tô vàng</b> là chưa có hóa đơn đầu vào: <b>${miss.length}</b>/${S2.length} dòng. Gõ vào ô <b>ghi chú nguồn hàng</b> ngay trên dòng (hàng tồn cũ, mua lẻ, nhân công…), tự lưu khi gõ xong.</span></div>
    <div class="bar"><label class="chk"><input type="checkbox" data-bind="srcMiss" ${st.srcMiss?'checked':''}> Chỉ hiện dòng chưa có đầu vào</label></div>`+
    table([['Gán mã'],['Hàng hóa','w'],['ĐVT'],['SL','r'],['Đơn giá','r'],['Thành tiền','r'],['Nguồn hàng (HĐ đầu vào gần nhất / hàng tồn)','w2'],['Ngày'],['Số HĐ'],['Người mua','w']],
    shown.map(({i,x,k,s})=>{const c=conv(x);return{cls:s.st==='none'||s.st==='later'?'hl':'',c:[`<button class="btn sm ${c.cv?'':'gold'}" data-act="cvOpen" data-id="${i.id}" data-ln="${k}">${c.cv?'Sửa':'Quy đổi'}</button>`,esc(x.name)+(c.cv?`<br><span class="mute">${esc(c.code)} · ${qf(c.qty)} ${esc(c.unit)}</span>`:''),esc(x.unit||''),qf(x.qty),vnd(x.price),vnd(num(x.amount)||num(x.qty)*num(x.price)),srcCell(i,k),`<span class="nw">${dmy(i.date)}</span>`,esc(i.no),esc(i.partyName||'')]}}),{empty:st.srcMiss?'Mọi dòng bán ra đều đã có hóa đơn đầu vào hoặc ghi chú.':'Chưa có dòng hàng nào trong khoảng ngày này.'});
@@ -976,7 +998,7 @@ function render(){
   setProg(progText);
 }
 let rt=null;
-function refresh(){if(rt)return;rt=setTimeout(()=>{rt=null;if(!role)return gate();const b=$('#body');if(!b)return render();
+function refresh(){if(rt)return;rt=setTimeout(()=>{rt=null;if(!role)return gate();{const ae=document.activeElement;if(ae&&ae.classList&&ae.classList.contains('ie')){metaPending=true;return}}const b=$('#body');if(!b)return render();
   const m=$('#main'),y=m?m.scrollTop:0,ae=document.activeElement,bound=ae&&ae.dataset&&ae.dataset.bind;
   const tw=$$('.tw',b).map(x=>[x.scrollTop,x.scrollLeft]);
   render();if(m)m.scrollTop=y;$$('.tw',$('#body')).forEach((x,i)=>{if(tw[i]){x.scrollTop=tw[i][0];x.scrollLeft=tw[i][1]}});
@@ -984,7 +1006,7 @@ function refresh(){if(rt)return;rt=setTimeout(()=>{rt=null;if(!role)return gate(
 function go(v){view=v;render();const m=$('#main');if(m)m.scrollTop=0}
 A.go=d=>{closeModal();go(d.id)};A.close=closeModal;
 A.reqRole=async()=>{try{await put('requests',me,{at:new Date().toISOString(),want:'ketoan'});toast('Đã gửi đề nghị, chờ chị Huyền Thi cấp quyền')}catch(e){toast('Không gửi được. Bạn cần được mời với quyền Contributor.','bad')}};
-document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const f=A[t.dataset.act];if(f){e.preventDefault();e.stopPropagation();f(t.dataset,t)}});
+document.addEventListener('click',e=>{if(e.target.closest('.ie'))return;const t=e.target.closest('[data-act]');if(!t)return;const f=A[t.dataset.act];if(f){e.preventDefault();e.stopPropagation();f(t.dataset,t)}});
 let bt=null;
 function bindUpdate(e){const k=e.target.dataset&&e.target.dataset.bind;if(!k)return;st[k]=e.target.type==='checkbox'?e.target.checked:e.target.value;
   clearTimeout(bt);bt=setTimeout(()=>{const b=$('#body');if(b)try{b.innerHTML=VIEWS[view].body()}catch(err){console.error(err)}},e.type==='input'?220:0)}
