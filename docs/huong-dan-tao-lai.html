@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Câu lệnh tạo lại phần mềm Quản Lý Bán Hàng Thi Đạt</title>
+<style>
+@page{size:A4;margin:16mm 15mm 18mm 15mm}
+body{font-family:"DejaVu Sans",sans-serif;font-size:10.2pt;line-height:1.5;color:#14212b}
+h1{font-size:20pt;color:#0f2742;margin:0 0 4px}
+h2{font-size:13.5pt;color:#0f2742;border-bottom:2.5px solid #e0b04f;padding-bottom:3px;margin:22px 0 8px;page-break-after:avoid}
+h3{font-size:11pt;color:#16365a;margin:14px 0 5px;page-break-after:avoid}
+p{margin:5px 0}
+.cover{border:3px solid #0f2742;border-radius:10px;padding:22px 24px;margin-bottom:16px}
+.cover .sub{color:#62717c}
+.gold{display:block;width:60px;height:4px;background:#e0b04f;margin:0 0 12px}
+.prompt{border:1.5px solid #16365a;border-left:6px solid #e0b04f;border-radius:6px;background:#f7f9fb;padding:9px 12px;margin:6px 0 10px;white-space:pre-wrap;font-size:9.4pt;line-height:1.45;page-break-inside:auto}
+.prompt::before{content:"Câu lệnh — dán nguyên văn";display:block;font-weight:bold;color:#9a5d00;font-size:8.5pt;letter-spacing:.03em;margin-bottom:4px}
+.note{background:#fcefd4;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:9.6pt}
+.ok{background:#dff3e7;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:9.6pt}
+table{border-collapse:collapse;width:100%;margin:6px 0 10px;font-size:9.2pt}
+th,td{border:1px solid #c9d2da;padding:4px 7px;text-align:left;vertical-align:top}
+th{background:#e6edf6}
+ol,ul{margin:4px 0 8px 20px;padding:0}
+li{margin:2px 0}
+.step{display:inline-block;background:#0f2742;color:#fff;border-radius:10px;padding:0 9px;font-size:9pt;font-weight:bold;margin-right:6px}
+.toc li{margin:1px 0}
+.pb{page-break-before:always}
+code{font-family:"DejaVu Sans Mono",monospace;font-size:8.8pt;background:#eef2f6;padding:0 3px;border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="cover">
+<span class="gold"></span>
+<h1>Câu lệnh tạo lại phần mềm<br>Quản Lý Bán Hàng Thi Đạt</h1>
+<p class="sub">Công ty TNHH Thi Đạt · MST 0312510655 · Tài liệu dùng để dựng lại phần mềm trên một tài khoản Claude khác</p>
+<p class="sub">Soạn ngày 22/11/2026, theo đúng phần mềm đang chạy (bản 81)</p>
+</div>
+
+<h2>Cách dùng tài liệu này</h2>
+<ol>
+<li>Đăng nhập tài khoản Claude mới (cần gói có tính năng <b>Artifact</b>, tức trang web Claude tạo ra có lưu dữ liệu).</li>
+<li>Mở một cuộc trò chuyện mới với Claude (claude.ai hoặc Claude Code).</li>
+<li>Làm lần lượt từ <b>Bước 1</b>: mỗi khung viền vàng là một câu lệnh, chị <b>chép nguyên văn</b> rồi dán vào khung chat, đợi Claude làm xong, kiểm tra, rồi mới dán câu lệnh tiếp theo.</li>
+<li>Nếu Claude hỏi lại, chị trả lời theo ý mình; nội dung trong câu lệnh đã đủ để Claude hiểu.</li>
+<li>Cuối tài liệu có danh sách kiểm tra để chị dò xem phần mềm mới đã đủ chức năng chưa.</li>
+</ol>
+<div class="note"><b>Có 2 cách:</b> <b>Cách A (nhanh, giống hệt 100%)</b>: dùng lại file mã nguồn <code>index.html</code> đã lưu (xem Bước 0). <b>Cách B (dựng lại từ đầu)</b>: dán lần lượt các câu lệnh từ Bước 1 đến Bước 18. Cách B cho ra phần mềm cùng chức năng nhưng giao diện chi tiết có thể khác đôi chút.</div>
+
+<h3>Mục lục</h3>
+<ul class="toc">
+<li>Bước 0. Cách A: dựng lại bằng file mã nguồn có sẵn</li>
+<li>Bước 1. Tạo phần mềm gốc (phạm vi, menu, ngân hàng, hóa đơn, phân quyền)</li>
+<li>Bước 2–5. Mã hàng, quy đổi, xuất nhập tồn, cảnh báo, nạp dữ liệu</li>
+<li>Bước 6–9. Nhân sự (chấm công), Khách hàng / NCC, danh mục hàng hóa, hàng chi phí</li>
+<li>Bước 10–12. Theo dõi hóa đơn sửa trực tiếp, nguồn hàng đầu ra, nút Cập nhật</li>
+<li>Bước 13–15. Mục Tài khoản ngân hàng, mẫu biểu, thông tin công ty và kiểm tra hóa đơn sai</li>
+<li>Bước 16–18. Ghi chú giao dịch theo file TKNN, gợi ý hóa đơn, tốc độ và nạp dữ liệu</li>
+<li>Bước 19. Các phần bổ sung (thuế GTGT, báo cáo tài chính, mã giao dịch, PDF hóa đơn, KiotViet)</li>
+<li>Bước 20. Chuyển dữ liệu từ tài khoản cũ sang</li>
+<li>Bước 21. Tác vụ tự động cập nhật dữ liệu mỗi ngày</li>
+<li>Quy tắc an toàn · Danh sách kiểm tra</li>
+</ul>
+
+<h2 class="pb">Bước 0. Cách A: dựng lại bằng file mã nguồn có sẵn</h2>
+<p>Toàn bộ phần mềm nằm trong <b>một file</b> <code>index.html</code>, đã lưu trên GitHub, kho <code>dienlanhthidat-afk/Thi-dat</code>, nhánh <code>claude/confident-mendel-s9ihwj</code>. Chị tải file đó về máy (nút <i>Download raw file</i> trên GitHub), rồi đính kèm vào cuộc trò chuyện mới cùng câu lệnh dưới đây.</p>
+<div class="prompt">Em đăng file index.html đính kèm thành một Artifact mới tên "Quản Lý Bán Hàng Thi Đạt", giữ nguyên toàn bộ mã. Khai báo đủ các quyền (capabilities) mà trang cần:
+- db (cơ sở dữ liệu dùng chung) với các quy tắc: users, settings chỉ admin được ghi; requests người dùng thường được ghi; cc_emps, cc_projects, cc_ts, cc_meta chỉ admin được ghi, ai cũng đọc; pbank và pbankTx chỉ chủ tài khoản (owner) được đọc và ghi;
+- downloads (tải file Excel, bản in);
+- user (biết ai đang xem, có tên hiển thị);
+- assets cho phép người dùng thường tải file lên (PDF hóa đơn, file hợp đồng).
+Đăng xong em mở thử, báo chị các mục trên menu có chạy không. Cơ sở dữ liệu mới đang trống; dữ liệu cũ em sẽ chuyển ở bước sau.</div>
+<div class="note">File <code>index.html</code> không chứa mật khẩu hay số tài khoản ngân hàng đầy đủ. Các tệp dữ liệu phụ (<code>pack2026.json</code>, <code>tknn.json</code>, <code>refs.json</code>, <code>kv_catalog.txt</code>) là dữ liệu thật của công ty, <b>không</b> có trên GitHub; nếu cần, chị tải từ phần mềm cũ (Bước 20).</div>
+
+<h2 class="pb">Bước 1. Tạo phần mềm gốc</h2>
+<div class="prompt">Hãy xây dựng phần mềm "Quản Lý Bán Hàng Thi Đạt" cho Công ty TNHH Thi Đạt (MST 0312510655, ngành điện lạnh), người dùng chính là giám đốc Phạm Thị Huyền Thi. Giao diện hoàn toàn tiếng Việt, dùng được trên điện thoại và iPad. Đóng gói thành MỘT file HTML duy nhất (Artifact, không cần server), nhiều người dùng, dữ liệu lưu trên cơ sở dữ liệu đám mây của Artifact (kiểu Firestore, capability db).
+
+PHẠM VI (cố ý hẹp): chỉ quản lý dữ liệu NGÂN HÀNG và HÓA ĐƠN vào/ra lấy từ hệ thống (eHoadon, BKAV, cổng thuế GDT) và thư mục OneDrive "THI DAT". Không tự chế dữ liệu mẫu, không có dữ liệu chấm công hay nhân sự mẫu. Báo giá, Hợp đồng, Khách hàng, Nhà cung cấp chỉ là các mô-đun trống chờ dữ liệu thật.
+
+MENU:
+- Tổng quan, Cảnh báo
+- Hóa đơn: Hóa đơn đầu vào, Hóa đơn đầu ra, Mã hàng, Xuất nhập tồn
+- Tài khoản ngân hàng: TK công ty, TK cá nhân
+- Khác: Báo giá, Hợp đồng, Khách hàng, Nhà cung cấp, Nhân sự
+
+TÍNH NĂNG:
+1. Ngân hàng: tài khoản công ty (MB 6868, VCB 7979, LPBank 0002, ACB 7499) và cá nhân (MB 1571, VCB 1571, Vietin 5571, TPBank 3934, TPBank CN2, ACB 2689). Chỉ lưu và hiện 4 số cuối tài khoản. Giao dịch gồm ngày, số tiền (+vào/-ra), nội dung, số dư. Nhập từ sao kê Excel/CSV (tự nhận cột Ngày, Nội dung, Ghi nợ/Ghi có hoặc Số tiền, Số dư), tự bỏ qua giao dịch trùng (cùng tài khoản, ngày, số tiền). Xuất Excel từng tài khoản, theo nhóm công ty/cá nhân, và file tổng tất cả ngân hàng.
+2. Hóa đơn đầu vào và đầu ra: mỗi mục có hai tab Tổng quát và Chi tiết. Lọc theo ngày (mặc định từ 01/01/2026 đến hôm nay). Khóa hóa đơn = chiều|ký hiệu|số|MST. Bỏ qua hóa đơn trạng thái BTT, ĐH, hủy, bị thay thế. Nạp hóa đơn từ file XML (eHoadon, BKAV, cổng thuế, có chi tiết hàng) và file Excel danh sách của cổng thuế. Xuất Excel gồm tổng quát, chi tiết cả năm và từng tháng.
+3. Phân quyền: chủ sở hữu và người được chia sẻ quyền sửa là Quản trị; Kế toán (do Quản trị cấp) được nạp dữ liệu; người khác chỉ xem. Người dùng gửi "Đề nghị quyền kế toán", Quản trị duyệt ở mục Nhân sự. Có nhật ký hoạt động.
+
+GIAO DIỆN: thanh bên màu xanh navy, điểm nhấn vàng, bảng có tiêu đề cố định khi cuộn. Trên iPad (rộng dưới 1180px) bảng cuộn ngang được, chữ tự xuống dòng; cột thao tác (ví dụ "Gán mã", "Quy đổi") đặt ở cột đầu. Trên điện thoại menu thành thanh cuộn ngang phía trên. Có chế độ sáng/tối theo máy.
+
+QUY TẮC AN TOÀN: không lưu hay in mật khẩu, OTP, số tài khoản đầy đủ ra nơi công khai. Phần mềm chỉ ĐỌC thư mục OneDrive, không đổi tên hay chuyển các thư mục QLBH, NGÂN HÀNG, KIOTVIET.
+
+Làm xong hãy tự chạy thử, rồi đăng thành Artifact và gửi chị đường link.</div>
+
+<h2>Bước 2. Mã hàng và quy đổi đơn vị</h2>
+<div class="prompt">Thêm mục Mã hàng: mỗi mặt hàng mà nhà cung cấp đặt tên khác nhau (ví dụ "Dây cáp CV 2.5", "Cáp điện Cadivi CV-2.5mm²") được gộp thành một mã MH0001, MH0002…
+- Gợi ý gộp theo độ giống tên (các con số phải khớp, không gộp khác loại phụ kiện như co/tê/nối/lơi/y/ren/lên/xuống).
+- Ở tab Chi tiết của hóa đơn, mỗi dòng có nút "Quy đổi" ở cột đầu, giống KiotViet: chọn mã hàng (hoặc tạo mã mới), đơn vị đích, hệ số quy đổi (1 đơn vị gốc = ? đơn vị đích). Áp dụng cho mọi dòng cùng tên, cùng đơn vị ở cả đầu vào và đầu ra.
+- Có mẫu ống đồng tự tính hệ số: kg ↔ cuộn 15 m ↔ m, theo bảng quy cách ống đồng thường và ống đồng Thái (đường kính 6.35 đến 19.05, các độ dày phổ biến, khối lượng kg trên cuộn 15 m).
+- Tab: Danh sách mã, Gợi ý gộp (nút "Gộp thành 1 mã"), Chưa gán mã. Xuất Excel.</div>
+
+<h2>Bước 3. Xuất nhập tồn</h2>
+<div class="prompt">Thêm mục Xuất nhập tồn: Nhập = chi tiết hàng trên hóa đơn đầu vào, Xuất = chi tiết hàng trên hóa đơn đầu ra (bỏ hóa đơn hủy, bị thay thế). Tính theo mã hàng và đơn vị đã quy đổi; hàng chưa gán mã tính theo tên + đơn vị. Cột: Mã, Hàng hóa, ĐVT, Tồn đầu, Nhập, Xuất, Tồn cuối, Giá trị nhập, Giá trị xuất. Tô vàng dòng tồn âm. Lọc theo khoảng ngày, xuất Excel.</div>
+
+<h2>Bước 4. Cảnh báo</h2>
+<div class="prompt">Thêm mục Cảnh báo:
+1. Thanh toán nghi trùng: lệnh chi ra từ 200.000 đ, cùng số tiền, cách nhau không quá 3 ngày, và cùng số hóa đơn hoặc cùng đối tác (hai lệnh ghi hai số hóa đơn khác nhau thì không coi là trùng). Mỗi giao dịch có nút "Trùng" / "Không trùng" / "Bỏ chọn"; giao dịch xác nhận trùng bị loại khỏi mọi báo cáo và file Excel.
+2. Công nợ khách hàng: tổng hóa đơn đầu ra theo MST trừ tiền vào ngân hàng đã khớp với khách đó.
+3. Công nợ nhà cung cấp: tổng hóa đơn đầu vào theo MST trừ tiền chi ra đã khớp.
+Phần mềm tự khớp giao dịch với đối tác theo MST, tên công ty hoặc số hóa đơn ghi trong nội dung chuyển khoản; giao dịch nào khớp sai thì chị gán lại bằng tay.</div>
+
+<h2>Bước 5. Tổng quan và nạp dữ liệu tự động</h2>
+<div class="prompt">Trang Tổng quan gọn: lời chào, số nhóm nghi trùng, số khách còn nợ; ô tổng hóa đơn đầu ra 2026, đầu vào 2026, ngân hàng công ty 2026, ngân hàng cá nhân 2026; thẻ "Cập nhật dữ liệu" cho biết mỗi nguồn (hóa đơn đầu ra, đầu vào, sao kê từng tài khoản, chấm công) có dữ liệu đến ngày nào, nhãn Mới / x ngày trước / Cần cập nhật.
+
+Nạp dữ liệu tự động qua collection "inbox" trong cơ sở dữ liệu: các tác vụ tự động ghi tài liệu vào inbox, phần mềm tự nạp rồi đánh dấu done:true. Định dạng:
+- Hóa đơn: {kind:'inv_out' hoặc 'inv_in', source, at, csv:'dòng1;dòng2;...'}; mỗi dòng: ký hiệu,số,ngày YYYY-MM-DD,MST đối tác,tiền chưa thuế,tổng thanh toán,trạng thái (ok/BTT),tên đối tác.
+- Chi tiết hàng: {kind:'inv_lines', rows:[[chiều, ký hiệu, số, MST, [[tên, ĐVT, SL, đơn giá, thành tiền],...]],...]}.
+- Sao kê: {kind:'bank', bankName, last4, type:'cty'|'canhan', rows:[[ngày, số tiền (+ vào, - ra), nội dung, số dư],...]}.
+Quan trọng: phải nạp NGAY khi có tài liệu mới trong inbox (kể cả lúc trang đang mở), kiểm tra lại mỗi 2 phút; một gói lỗi không được làm dừng các gói khác.</div>
+
+<h2 class="pb">Bước 6. Nhân sự lấy từ phần mềm chấm công</h2>
+<div class="prompt">Mục Nhân sự lấy dữ liệu thật từ phần mềm "Chấm Công Công Trình" của chị (Artifact riêng, có collection emps, newemps, projects, ts theo tháng, config/app). Em chép dữ liệu đó sang cơ sở dữ liệu của phần mềm này thành cc_emps, cc_projects, cc_ts, cc_meta (BỎ mã PIN của nhân viên), chỉ quản trị được ghi.
+Mục Nhân sự có tab: Bảng công (theo tháng: ngày đi làm, công ngày thường, giờ tăng ca, giờ Chủ nhật, lượt quên ra ca, công trình), Theo công trình, Nhân viên, Phân quyền (chỉ quản trị). Cách tính công giống hệt phần mềm chấm công: giờ hành chính tính công (8 giờ = 1 công), tăng ca tính giờ, Chủ nhật tính toàn bộ theo giờ. Xuất Excel bảng công. Trong tab Phân quyền có hướng dẫn chia sẻ: người chỉ xem mời quyền Viewer, kế toán mời quyền Contributor.</div>
+
+<h2>Bước 7. Tách Khách hàng và Nhà cung cấp</h2>
+<div class="prompt">Tách "Khách hàng" và "Nhà cung cấp" thành hai mục riêng trên menu. Mỗi mục có: danh sách lấy thẳng từ hóa đơn (khách hàng từ hóa đơn đầu ra, nhà cung cấp từ hóa đơn đầu vào, gộp theo MST) kèm số hóa đơn, tổng hóa đơn, đã thu/đã trả qua ngân hàng, còn lại, hóa đơn gần nhất; bên dưới là phần nhập tay thông tin liên hệ (tên, MST, điện thoại, địa chỉ, ghi chú). Bấm một đối tác để xem hóa đơn và giao dịch ngân hàng của họ.</div>
+
+<h2>Bước 8. Danh mục hàng hóa (tạm)</h2>
+<div class="prompt">Thêm "Danh mục hàng hóa" trong nhóm Hóa đơn: tập hợp mọi tên hàng trên HÓA ĐƠN ĐẦU VÀO, gom các tên giống nhau thành nhóm. Độ giống tính bằng so từng cặp ký tự (bỏ dấu, khoảng trắng, ký hiệu); các con số phải khớp; không gom khác loại phụ kiện; so với tên đại diện của nhóm để không nối dây chuyền. Mặc định chỉ gom tên giống từ 90% (chắc chắn), có ô chọn 85% và 80%. Hiện % độ giống cạnh mỗi tên. Mỗi nhóm có nút "Tạo mã cho nhóm" và "Là chi phí". Cột: tên đại diện, các tên trong nhóm, ĐVT, số dòng hóa đơn, giá nhập thấp–cao, tổng tiền nhập, nhà cung cấp, ngày nhập gần nhất. Xuất Excel.</div>
+
+<h2>Bước 9. Hàng chi phí (không đưa vào thương mại)</h2>
+<div class="prompt">Thêm mục "Hàng chi phí": hóa đơn đầu vào thuộc chi phí KHÔNG đưa vào thương mại (không hiện trong Danh mục hàng hóa, Mã hàng, Xuất nhập tồn). Tự nhận theo tên người bán và tên hàng, chia 5 nhóm với từ khóa mặc định:
+- Vận chuyển, đi lại: Be Group, Dịch vụ Tức Thời (Ahamove), Lalamove, Grab, Gojek, Xanh SM / Di chuyển Xanh và Thông minh GSM, bưu chính, Viettel Post, hàng không, đăng kiểm, khách sạn, du lịch; tên hàng: cước vận chuyển, phí giao hàng, chuyến xe, phí nền tảng, vé máy bay.
+- Ăn uống: nhà hàng, quán ăn, ẩm thực, cà phê; tên hàng: suất ăn, nước suối, nước ngọt, bia lon, khăn lạnh, cơm hộp, lẩu.
+- Điện thoại, Internet: Viettel (viễn thông), Vinaphone, Mobifone, VNPT; tên hàng: thẻ cào, gói cước, cước internet.
+- Xăng dầu: xăng dầu, Petrolimex; tên hàng: xăng, RON 95, dầu diesel.
+- Ngân hàng, bảo hiểm, dịch vụ khác: ngân hàng, bảo hiểm, đấu thầu qua mạng, công chứng, thẩm định giá, siêu thị Co.op, Bách Hóa Xanh; tên hàng: phí dịch vụ, lệ phí, chữ ký số.
+Có ô "Ghi chú của chị", tab Tổng hợp theo nhóm, Tên hàng chi phí, Theo người bán, Từ khóa nhận diện (sửa được, có nút trả về mặc định). Mỗi dòng hàng và mỗi hóa đơn có nút đổi Chi phí / Thương mại (đánh dấu tay ưu tiên hơn từ khóa). Xuất Excel.</div>
+
+<h2 class="pb">Bước 10. Theo dõi hóa đơn, sửa trực tiếp trên bảng</h2>
+<div class="prompt">Ở tab Tổng quát của hóa đơn đầu vào và đầu ra, thêm các cột theo dõi, SỬA TRỰC TIẾP TRÊN BẢNG (gõ hoặc chọn xong là tự lưu, ô sáng viền xanh, không mở hộp riêng):
+- Đã thu / Đã trả qua ngân hàng (tự tính: phân bổ tiền ngân hàng đã khớp đối tác cho từng hóa đơn, ưu tiên giao dịch ghi số hóa đơn, còn lại trả hóa đơn cũ trước);
+- Thanh toán: Tự động / Đã thanh toán / Thanh toán một phần / Đã tạm ứng / Chưa thanh toán (chọn tay thì có dấu ✎);
+- Tạm ứng (số tiền, ngày); Hợp đồng (Có / Chưa có / Không cần + số hợp đồng, nhãn "Chưa ghi" với hóa đơn từ 20 triệu); Công trình (gợi ý từ danh sách công trình chấm công); Sale (đầu vào là Phụ trách, gợi ý từ danh sách nhân viên); Ghi chú.
+- Nút "Xem HĐ" ở cuối dòng. Người chỉ xem thấy nội dung nhưng không có ô sửa.
+Ô cảnh báo trên đầu tab: tổng thanh toán, đã thu/đã trả qua ngân hàng, còn phải thu/còn phải trả.</div>
+
+<h2>Bước 11. Nguồn hàng của hóa đơn đầu ra</h2>
+<div class="prompt">Ở tab Chi tiết của hóa đơn đầu ra, mỗi dòng bán ra ghi: hóa đơn đầu vào gần nhất của cùng mặt hàng trước ngày bán (cùng mã hàng hoặc tên giống từ 85%): số hóa đơn, ngày, nhà cung cấp, giá nhập; và tồn trước khi bán (nhãn "Có hàng tồn" / "Tồn không đủ"). Tô vàng dòng không có hóa đơn đầu vào hoặc chỉ có đầu vào sau ngày bán. Có ô ghi chú nguồn hàng gõ ngay trên dòng (hàng tồn cũ, mua lẻ, nhân công…), dòng đã ghi chú hết tô vàng. Ô "Chỉ hiện dòng chưa có đầu vào". File Excel có thêm các cột này.</div>
+
+<h2>Bước 12. Nút Cập nhật dữ liệu</h2>
+<div class="prompt">Đặt nút "⟳ Cập nhật dữ liệu" màu vàng ở góc trên bên phải, ngang tiêu đề, hiện ở mọi trang (chỉ quản trị và kế toán thấy). Bên cạnh ghi lần cập nhật gần nhất, dữ liệu đến ngày nào, trạng thái yêu cầu (Đã gửi yêu cầu x phút trước / Đang tải / Tải xong / Lần tải trước lỗi kèm lý do) và số gói đang chờ nạp. Bấm nút thì: nạp NGAY mọi gói đang chờ trong inbox, rồi ghi sync/request = {status:'pending', at, by, scope} để tác vụ tự động tải dữ liệu mới (xem Bước 21). Mỗi lần mở phần mềm, nếu yêu cầu trước đã quá 4 giờ thì tự gửi yêu cầu mới.</div>
+
+<h2>Bước 13. Mục Tài khoản ngân hàng riêng</h2>
+<div class="prompt">Tạo nhóm menu "Tài khoản ngân hàng" gồm 2 mục:
+- TK công ty: tab "Tổng công ty" và một tab cho từng ngân hàng (MB 6868, VCB 7979, LPBank 0002, ACB 7499).
+- TK cá nhân (CHỈ CHỦ TÀI KHOẢN xem được; dữ liệu cá nhân lưu ở collection riêng pbank / pbankTx có quy tắc chỉ owner đọc và ghi): tab "Tổng cá nhân" và từng ngân hàng (MB 1571, VCB 1571, Vietin 5571, TPBank 3934, TPBank CN2, ACB 2689).
+Tab Tổng: tổng số dư hiện tại, tiền vào, tiền ra, chênh lệch; bảng theo từng ngân hàng (bấm sang tab ngân hàng đó); DÒNG TIỀN GỘP tất cả ngân hàng trong nhóm, ngày mới nhất lên đầu, có ô chọn "Ngày mới nhất trước / Ngày cũ nhất trước" và nút "Đảo thứ tự"; bảng theo tháng; nút xuất Excel tổng. Tab từng ngân hàng: số dư, tiền vào, tiền ra, danh sách giao dịch, lọc ngày, chiều vào/ra, tìm kiếm, nhập sao kê, xuất Excel.</div>
+
+<h2>Bước 14. Mẫu biểu</h2>
+<div class="prompt">Thêm nhóm menu "Mẫu biểu" gồm: Phiếu giao hàng, Phiếu đặt hàng mua, Phiếu đề nghị thanh toán, Hợp đồng, Biên bản bàn giao, Biên bản nghiệm thu (mẫu tạm, chị sẽ gửi mẫu chuẩn để sửa sau).
+- Số phiếu tự đánh GH-2026-0001, DH-2026-0001, TT-2026-0001…
+- Lấy thông tin từ hóa đơn: phiếu giao hàng từ hóa đơn đầu ra (khách, dòng hàng); đề nghị thanh toán từ hóa đơn đầu vào (nhà cung cấp, số tiền còn phải trả, nội dung).
+- Bản in có đầu trang công ty, số tiền bằng chữ, ô ký tên; nút "In / Lưu PDF" và "Tải bản in". Phiếu được lưu để sửa, in lại.</div>
+
+<h2>Bước 15. Thông tin công ty, dòng tiền mới và kiểm tra hóa đơn sai</h2>
+<div class="prompt">Thông tin công ty (dùng cho bản in và để kiểm tra hóa đơn):
+- Tên: CÔNG TY TNHH THI ĐẠT · MST 0312510655
+- Trụ sở: D16/21/1, Ấp 22, Xã Tân Vĩnh Lộc, Thành phố Hồ Chí Minh
+- Văn phòng: 78 đường 24B, Phường An Lạc, Thành phố Hồ Chí Minh
+- Email liên hệ: thidat.co@gmail.com · Email nhận hóa đơn: thidat.kt@gmail.com
+- Giám đốc: Phạm Thị Huyền Thi · Điện thoại 0858.301.301
+(KHÔNG lưu số tài khoản ngân hàng đầy đủ vào phần mềm.)
+
+Trang Tổng quan:
+1. Thay bảng tổng hợp ngân hàng bằng "Dòng tiền mới phát sinh": 25 giao dịch mới nhất, tab Công ty / Cá nhân (Cá nhân chỉ chủ xem), có số hóa đơn, công trình, sale, đối tác; tổng vào/ra 7 ngày gần nhất; nút "Xem tất cả".
+2. Ô "Hóa đơn sai thông tin công ty" (viền đỏ khi có lỗi): với hóa đơn có file XML, kiểm tra tên, MST, địa chỉ trụ sở (báo sai nếu còn địa chỉ cũ kiểu "Vĩnh Lộc A, Bình Chánh"), email nhận hóa đơn; với mọi hóa đơn, kiểm tra MST đối tác đúng quy tắc kiểm tra số (10 hoặc 13 số) và hóa đơn đầu ra không xuất cho chính công ty. Khi nạp XML phải lưu tên, MST, địa chỉ, email bên Thi Đạt vào hóa đơn để kiểm tra.</div>
+
+<h2 class="pb">Bước 16. Ghi chú giao dịch ngân hàng theo file TKNN</h2>
+<div class="prompt">Mỗi giao dịch ngân hàng (cả TK công ty, TK cá nhân, tab Tổng, Tổng quan và file Excel) có các cột giống file "TKNN 2026 - CTY.xlsx" của chị: Ngày · Mã giao dịch · Thu · Chi · Nội dung · Diễn giải · Tên đơn vị · Số hóa đơn · Công trình · Loại · Sale · Ghi chú · Số dư. Sửa trực tiếp trên bảng, tự lưu.
+Thứ tự điền sẵn: (1) chị gõ tay; (2) lấy từ file TKNN của chị (chữ màu xanh; em sẽ đưa file vào phần mềm dưới dạng tknn.json, khớp theo tài khoản + ngày + số tiền); (3) phần mềm tự nhận (chữ nghiêng xám): số hóa đơn lấy theo "HD …" trong nội dung (kể cả số bị ngân hàng cắt đôi như "HD so 1175 1" = 11751), công trình lấy theo "CT …" (ví dụ "CT 98 Bui Dinh Tuy"); nội dung không ghi thì rà hóa đơn cùng đối tác, cùng số tiền; dự án/sale lấy theo hóa đơn đã khớp. Gõ "-" vào ô số hóa đơn nếu giao dịch không có hóa đơn.</div>
+
+<h2>Bước 17. Gợi ý hóa đơn cho khoản còn thiếu</h2>
+<div class="prompt">Chỉ tô vàng giao dịch từ 200.000 đ thuộc loại thu tiền khách hàng / khách tạm ứng / thanh toán hoặc tạm ứng nhà cung cấp mà còn thiếu số hóa đơn. Các loại không cần hóa đơn (chuyển nội bộ, chị Thi chuyển vào, lãi tiền gửi, phí ngân hàng, bảo lãnh, ký quỹ, vay và trả nợ vay, rút/nộp tiền mặt, BHXH, thuế, lương, hoàn tiền) thì không tô.
+Mỗi dòng tô vàng có nút "Gợi ý hóa đơn": hiện các hóa đơn cùng đối tác còn chưa thanh toán đủ (chưa rõ đối tác thì gợi ý theo số tiền), và các TỔ HỢP tối đa 4 hóa đơn cộng lại khớp đúng số tiền (lệch không quá 1.000 đ); chị tick chọn rồi lưu, số hóa đơn được ghi vào giao dịch.</div>
+
+<h2>Bước 18. Tốc độ và độ ổn định</h2>
+<div class="prompt">Tối ưu cho iPad và điện thoại: mỗi bảng chỉ vẽ 150 dòng đầu, có nút "Hiện thêm 300 dòng" và "Hiện tất cả"; lưu đệm các phép tính nặng theo phiên bản dữ liệu (đối tác, khớp giao dịch, danh sách hóa đơn hợp lệ). Khi đang gõ trong ô sửa trực tiếp thì không vẽ lại trang làm mất chữ. Sau khi làm xong, tự chạy thử với dữ liệu thật: đo thời gian mở từng mục (mục tiêu dưới 0,4 giây trên máy tính), mở hết các mục trên menu không được có lỗi.</div>
+
+<h2 class="pb">Bước 19. Các phần bổ sung</h2>
+<p>Những phần này đã có trong phần mềm đang chạy (một số do phiên Claude khác làm). Dán từng câu lệnh nếu chị cần.</p>
+<h3>19a. Báo cáo thuế GTGT</h3>
+<div class="prompt">Thêm "Báo cáo thuế & tài chính" > Thuế GTGT: lập tờ khai mẫu 01/GTGT theo quý từ hóa đơn đầu ra và đầu vào (áp dụng TT 80/2021/TT-BTC, và TT 89/2026/TT-BTC từ kỳ 01/7/2026), chia theo thuế suất 0/5/8/10%; nhập số thuế còn được khấu trừ chuyển kỳ trước; cảnh báo hóa đơn đầu vào từ 5 triệu chưa thanh toán qua ngân hàng (không được khấu trừ). Xuất Excel bảng kê bán ra, mua vào, in tờ khai.</div>
+<h3>19b. Báo cáo tài chính</h3>
+<div class="prompt">Thêm báo cáo tài chính theo TT 200/2014/TT-BTC: B01 (bảng cân đối kế toán), B02 (kết quả kinh doanh), B03 (lưu chuyển tiền tệ), B09 (thuyết minh) và thuế TNDN tạm tính (thuế suất 17% nếu đủ điều kiện doanh nghiệp nhỏ, cho chị chọn). Số liệu lấy từ hóa đơn, ngân hàng, hàng chi phí; các số chưa có trong phần mềm (vốn góp, vay, tài sản cố định…) cho chị nhập tay và lưu lại. Xuất Excel, in.</div>
+<h3>19c. Mã giao dịch từ sổ phụ</h3>
+<div class="prompt">Thêm cột "Mã giao dịch" cho giao dịch ngân hàng, lấy từ sổ phụ (em đưa vào phần mềm dạng refs.json từ file TKNN / CN-TKNN của chị), khớp theo tài khoản + ngày + số tiền + số dư; cảnh báo "Cùng mã" khi hai giao dịch cùng tài khoản trùng mã và số tiền. Giao dịch có trong sổ phụ mà phần mềm thiếu thì bổ sung, ghi rõ nguồn.</div>
+<h3>19d. File PDF của hóa đơn, file hợp đồng</h3>
+<div class="prompt">Cho phép đính kèm file PDF (hoặc ảnh) cho từng hóa đơn và file hợp đồng (PDF/ảnh, tối đa 20 MB) bằng capability assets; nút "+ PDF" / "Đổi PDF" và "+ Thêm hợp đồng" trên dòng hóa đơn, mở xem bằng liên kết 📄. Hợp đồng gắn với hóa đơn cũng hiện ở mục Hợp đồng.</div>
+<h3>19e. Danh mục KiotViet và hàng hóa, tồn kho</h3>
+<div class="prompt">Nạp danh mục hàng hóa từ KiotViet (file kv_catalog.txt, mỗi dòng: mã|tên|ĐVT|nhóm|ĐVT quy đổi khác) vào mã hàng, chỉ nạp một lần. Gộp Danh mục hàng hóa, Mã hàng, Hàng chi phí, Xuất nhập tồn thành một mục "Hàng hóa và tồn kho" có các tab. Có nút "Tự gán mã" cho tên hàng giống từ 90% với mã đã có (cùng đơn vị). Tên đối tác còn trống thì tự điền từ hóa đơn khác cùng MST, chỗ chưa có thì cho nhập tay ngay trên bảng.</div>
+
+<h2 class="pb">Bước 20. Chuyển dữ liệu từ tài khoản cũ sang</h2>
+<p>Dữ liệu (hóa đơn, giao dịch, mã hàng, ghi chú chị đã nhập…) nằm trong cơ sở dữ liệu của phần mềm cũ, không tự đi theo. Làm như sau:</p>
+<p><span class="step">1</span>Trên <b>tài khoản cũ</b>, mở cuộc trò chuyện mới và dán:</p>
+<div class="prompt">Em xuất toàn bộ cơ sở dữ liệu của Artifact "Quản Lý Bán Hàng Thi Đạt" (đường link: [dán link phần mềm cũ]) ra các file JSON, mỗi collection một file: bank, bankTx, invoices, items, convs, users, partners, quotes, contracts, cc_emps, cc_projects, cc_ts, cc_meta, cost, costmark, forms, settings, sync. Riêng dữ liệu ngân hàng cá nhân (pbank, pbankTx) chỉ xuất khi chị xác nhận. Kèm các tệp phụ của trang: pack2026.json, tknn.json, refs.json, kv_catalog.txt. Nén tất cả thành một file zip, gửi chị để tải về. Không đưa file này lên chỗ công khai.</div>
+<p><span class="step">2</span>Trên <b>tài khoản mới</b>, sau khi đã có phần mềm (Bước 0 hoặc Bước 1–19), đính kèm file zip và dán:</p>
+<div class="prompt">Em nạp dữ liệu trong file zip đính kèm vào cơ sở dữ liệu của Artifact "Quản Lý Bán Hàng Thi Đạt" mới (link: [dán link phần mềm mới]): ghi lại từng collection, giữ nguyên mã tài liệu (id); dữ liệu cá nhân pbank, pbankTx ghi vào collection riêng chỉ chủ xem được. Các tệp pack2026.json, tknn.json, refs.json, kv_catalog.txt đăng kèm làm tệp phụ của trang. Xong em đếm số hóa đơn, số giao dịch từng tài khoản và so với số liệu trong file để báo chị khớp chưa. Không nạp lại collection inbox (hộp thư) cũ.</div>
+<div class="note">Bảng công chấm công (cc_…) là bản chép; nếu phần mềm "Chấm Công Công Trình" cũng chuyển sang tài khoản mới thì chép lại theo Bước 6.</div>
+
+<h2>Bước 21. Tác vụ tự động cập nhật dữ liệu mỗi ngày</h2>
+<div class="note"><b>Quan trọng:</b> tác vụ tải dữ liệu phải chạy <b>trên laptop của chị</b> (ứng dụng Claude trên máy tính, giữ mở), nơi trình duyệt đã đăng nhập sẵn eHoadon, cổng thuế và ngân hàng. Tác vụ chạy trên máy chủ đám mây không có trình duyệt đã đăng nhập và không nhập được OTP, nên sẽ không lấy được dữ liệu.</div>
+<p>Mở ứng dụng Claude trên laptop, đăng nhập sẵn các trang, rồi dán:</p>
+<div class="prompt">Em tạo tác vụ định kỳ chạy trên máy tính này, mỗi ngày 6h50 sáng và mỗi khi phần mềm có yêu cầu cập nhật (kiểm tra tài liệu db sync/request của Artifact "Quản Lý Bán Hàng Thi Đạt" mỗi giờ từ 6h đến 21h; status 'pending' thì chạy, ghi 'running' khi bắt đầu, 'done' kèm doneAt khi xong, 'error' kèm msg nếu lỗi). Mỗi lần chạy:
+1) Hóa đơn đầu ra (eHoadon / BKAV): lấy danh sách hóa đơn đã phát hành 35 ngày gần nhất, ghi inbox/ehd_out_yyyymmdd = {kind:'inv_out', source:'eHoadon', at, csv}; mỗi dòng: ký hiệu,số,ngày YYYY-MM-DD,MST người mua,tiền chưa thuế,tổng thanh toán,trạng thái (ok hoặc BTT nếu bị thay thế/hủy),tên người mua (không có dấu phẩy, chấm phẩy trong tên).
+2) Hóa đơn đầu vào (cổng thuế hoadondientu.gdt.gov.vn, tab mua vào; cổng chỉ cho tra tối đa 1 tháng mỗi lần, lật hết trang): 35 ngày gần nhất, ghi inbox/gdt_in_yyyymmdd_a (chia b, c nếu dài quá 25.000 ký tự) cùng định dạng, MST và tên là của người bán. Nếu tải được file XML thì ghi thêm chi tiết hàng hóa (kind:'inv_lines').
+3) Sổ phụ ngân hàng công ty (MBBank dùng Tài khoản > Sổ phụ điện tử; TPBank, Vietcombank, ACB, LPBank): giao dịch từ 5 ngày trước đến hôm nay, ghi inbox/bank_tênNH_4sốcuối_yyyymmdd = {kind:'bank', bankName, last4, type:'cty', rows:[[ngày, số tiền (+vào/-ra), nội dung đầy đủ, số dư],...]} theo thứ tự thời gian.
+Không bao giờ tự nhập mật khẩu, OTP hay thông tin thẻ; trang nào bị đăng xuất hoặc đòi OTP/captcha thì dừng nguồn đó, báo chị trang nào cần đăng nhập, làm tiếp nguồn khác. Cuối cùng báo ngắn gọn nguồn nào xong, bao nhiêu dòng mới.</div>
+
+<h2 class="pb">Quy tắc an toàn (nhắc lại khi làm trên tài khoản mới)</h2>
+<ul>
+<li>Không lưu, không in mật khẩu, OTP, số tài khoản ngân hàng đầy đủ ra nơi công khai; phần mềm chỉ giữ 4 số cuối.</li>
+<li>Ngân hàng cá nhân chỉ chủ tài khoản xem được (collection riêng, quy tắc owner).</li>
+<li>Không để trang ở chế độ "Bất kỳ ai có link" nếu trong đó có hóa đơn và giao dịch công ty; chia sẻ bằng cách mời email: người xem quyền Viewer, kế toán quyền Contributor.</li>
+<li>Các file dữ liệu xuất ra (zip, JSON, Excel) là dữ liệu thật của công ty: không đưa lên chỗ công khai, không đưa vào GitHub công khai.</li>
+<li>Phần mềm và tác vụ tự động chỉ ĐỌC thư mục OneDrive "THI DAT", không đổi tên hay di chuyển QLBH, NGÂN HÀNG, KIOTVIET.</li>
+</ul>
+
+<h2>Danh sách kiểm tra sau khi tạo xong</h2>
+<table>
+<tr><th style="width:28%">Mục</th><th>Kiểm tra</th><th style="width:9%">Đạt</th></tr>
+<tr><td>Đăng nhập, phân quyền</td><td>Chủ mở là Quản trị; người được mời Viewer chỉ xem; kế toán đề nghị quyền và được duyệt</td><td>☐</td></tr>
+<tr><td>Tổng quan</td><td>Có ô hóa đơn 2026, ngân hàng, hóa đơn sai thông tin, dòng tiền mới, thẻ cập nhật dữ liệu</td><td>☐</td></tr>
+<tr><td>Nút Cập nhật dữ liệu</td><td>Ở góc trên mọi trang; bấm thì nạp ngay gói đang chờ và hiện trạng thái</td><td>☐</td></tr>
+<tr><td>Hóa đơn đầu vào/đầu ra</td><td>Hai tab Tổng quát / Chi tiết; lọc ngày từ 01/01/2026; sửa trực tiếp thanh toán, tạm ứng, hợp đồng, công trình, sale, ghi chú; xuất Excel theo tháng</td><td>☐</td></tr>
+<tr><td>Nguồn hàng đầu ra</td><td>Có hóa đơn đầu vào gần nhất, tồn trước khi bán, tô vàng dòng thiếu đầu vào</td><td>☐</td></tr>
+<tr><td>Hàng hóa và tồn kho</td><td>Danh mục gom tên 90%, hàng chi phí bị loại, mã hàng + quy đổi + mẫu ống đồng, xuất nhập tồn</td><td>☐</td></tr>
+<tr><td>TK công ty</td><td>Tab Tổng + 4 ngân hàng; dòng tiền gộp sắp xếp mới/cũ; đủ cột theo file TKNN; gợi ý hóa đơn</td><td>☐</td></tr>
+<tr><td>TK cá nhân</td><td>Chỉ chủ thấy; tab Tổng + 6 ngân hàng</td><td>☐</td></tr>
+<tr><td>Cảnh báo</td><td>Thanh toán nghi trùng (Trùng / Không trùng), công nợ khách hàng, nhà cung cấp</td><td>☐</td></tr>
+<tr><td>Mẫu biểu</td><td>Lập phiếu, lấy từ hóa đơn, in / lưu PDF</td><td>☐</td></tr>
+<tr><td>Nhân sự</td><td>Bảng công đúng số liệu phần mềm chấm công; phân quyền</td><td>☐</td></tr>
+<tr><td>Dữ liệu chuyển sang</td><td>Số hóa đơn, số giao dịch từng tài khoản khớp với phần mềm cũ</td><td>☐</td></tr>
+<tr><td>Tốc độ</td><td>Mở mỗi mục dưới 1 giây trên iPad; không lỗi khi bấm hết menu</td><td>☐</td></tr>
+</table>
+
+</body>
+</html>
